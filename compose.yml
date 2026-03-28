@@ -15,16 +15,9 @@ services:
       - .:/app
       - bundle:/usr/local/bundle
     working_dir: /app
+    env_file: .env
     environment:
-      FORCE_DB_CREATE: ${FORCE_DB_CREATE:-false}
-      FORCE_DB_SEED: ${FORCE_DB_SEED:-false}
-      PORT: ${PORT:-3000}
-      RAILS_ENV: development
       BUNDLE_GEMFILE: /app/Gemfile
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/credito_poc_development
-      REDIS_URL: redis://redis:6379/0
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
     command: bin/docker-dev-start-web.sh
     networks:
       - backend
