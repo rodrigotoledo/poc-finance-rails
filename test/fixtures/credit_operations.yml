@@ -1,0 +1,21 @@
+op_draft:
+  receivable: ref_acme_001
+  originator: acme
+  funded_amount_cents: 45000
+  rate: 1.5
+  status: draft
+
+op_approved:
+  receivable: ref_acme_002
+  originator: acme
+  funded_amount_cents: 75000
+  rate: 2.0
+  status: approved
+
+discarded_op:
+  receivable: ref_beta_001
+  originator: beta
+  funded_amount_cents: 25000
+  rate: 1.0
+  status: cancelled
+  discarded_at: 2024-01-01 00:00:00

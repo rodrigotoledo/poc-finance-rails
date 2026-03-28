@@ -1,32 +1,52 @@
 networks:
   backend:
 
+x-app: &app_defaults
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      # Defina em .env (veja .env.example) para coincidir com `id -u` / `id -g` no host — evita arquivos criados pelo container com outro dono.
+      USER_ID: ${USER_ID:-1000}
+      GROUP_ID: ${GROUP_ID:-1000}
+  tty: true
+  stdin_open: true
+  volumes:
+    - .:/app
+    - bundle:/usr/local/bundle
+  working_dir: /app
+  env_file: .env
+  networks:
+    - backend
+
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        USER_ID: 1000  # Altere para o valor do seu 'id -u'
-        GROUP_ID: 1000  # Altere para o valor do seu 'id -g'
-    tty: true
-    stdin_open: true
-    volumes:
-      - .:/app
-      - bundle:/usr/local/bundle
-    working_dir: /app
-    env_file: .env
+    <<: *app_defaults
     environment:
       BUNDLE_GEMFILE: /app/Gemfile
     command: bin/docker-dev-start-web.sh
-    networks:
-      - backend
     ports:
       - "${PORT:-3000}:3000"
     depends_on:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  # Minitest + Guard: watch files and re-run tests (polling for macOS Docker volumes).
+  # Usage: docker compose up guard   then in another terminal: docker compose exec guard bash
+  # Or attach: docker compose attach guard
+  guard:
+    <<: *app_defaults
+    environment:
+      BUNDLE_GEMFILE: /app/Gemfile
+      RAILS_ENV: test
+      GUARD: "1"
+      LISTEN_GEM_POLLING: "true"
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/credito_poc_test
+    command: sh -c "bundle exec rails db:test:prepare && bundle exec guard -i"
+    depends_on:
+      db:
         condition: service_healthy
 
   db:

@@ -1,0 +1,28 @@
+ref_acme_001:
+  originator: acme
+  reference_number: REF-ACME-001
+  amount_cents: 50000
+  due_on: 2026-12-31
+  status: pending
+
+ref_acme_002:
+  originator: acme
+  reference_number: REF-ACME-002
+  amount_cents: 80000
+  due_on: 2026-11-30
+  status: eligible
+
+ref_beta_001:
+  originator: beta
+  reference_number: REF-BETA-001
+  amount_cents: 30000
+  due_on: 2026-10-31
+  status: pending
+
+discarded_receivable:
+  originator: acme
+  reference_number: REF-GONE
+  amount_cents: 10000
+  due_on: 2026-01-01
+  status: cancelled
+  discarded_at: 2024-01-01 00:00:00

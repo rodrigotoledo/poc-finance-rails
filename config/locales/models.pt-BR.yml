@@ -1,0 +1,9 @@
+---
+pt-BR:
+  activerecord:
+    errors:
+      models:
+        credit_operation:
+          attributes:
+            originator_id:
+              inconsistent_originator: "deve ser o mesmo originador do recebível"

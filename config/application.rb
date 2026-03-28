@@ -30,5 +30,8 @@ module CreditoPoc
     config.api_only = true
 
     config.solid_queue.connects_to = { database: { writing: :queue } }
+
+    config.i18n.available_locales = %i[en pt-BR]
+    config.i18n.default_locale = :en
   end
 end

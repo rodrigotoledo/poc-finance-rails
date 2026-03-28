@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Mostra o UID dentro do container `app` vs o seu no Mac. Devem ser iguais após .env + rebuild.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+echo "Host:  uid=$(id -u) gid=$(id -g) user=$(id -un)"
+echo -n "Container app: "
+docker compose run --rm --no-deps app id 2>/dev/null || {
+  echo "(falhou — suba o stack ou: docker compose build app)"
+  exit 1
+}

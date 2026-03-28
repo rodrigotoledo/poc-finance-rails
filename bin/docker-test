@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Run Minitest inside Docker with the test database (not DATABASE_URL from .env for development).
+# SimpleCov: enabled by default (summary in the terminal + HTML under coverage/).
+# Disable: COVERAGE=false bin/docker-test
+set -euo pipefail
+export RAILS_ENV=test
+export DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@db:5432/credito_poc_test}"
+export COVERAGE="${COVERAGE:-true}"
+exec bundle exec rails test "$@"

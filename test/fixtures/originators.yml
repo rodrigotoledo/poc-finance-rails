@@ -1,0 +1,12 @@
+acme:
+  legal_name: Acme Financiamentos
+  tax_id: "00000000000001"
+
+beta:
+  legal_name: Beta Credito
+  tax_id: "00000000000002"
+
+discarded_one:
+  legal_name: Gone Corp
+  tax_id: "00000000000099"
+  discarded_at: 2024-01-01 00:00:00

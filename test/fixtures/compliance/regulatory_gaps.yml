@@ -1,0 +1,19 @@
+gap_open:
+  area: regulation
+  code: BACEN-001
+  description: Missing BACEN report
+  severity: high
+  status: open
+  credit_operation: op_draft
+
+gap_standalone:
+  area: security
+  code: SEC-001
+  description: Security audit gap
+  severity: medium
+  status: open
+
+discarded_gap:
+  area: infrastructure
+  status: closed
+  discarded_at: 2024-01-01 00:00:00

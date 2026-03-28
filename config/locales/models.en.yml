@@ -1,0 +1,9 @@
+---
+en:
+  activerecord:
+    errors:
+      models:
+        credit_operation:
+          attributes:
+            originator_id:
+              inconsistent_originator: "must match the receivable's originator"

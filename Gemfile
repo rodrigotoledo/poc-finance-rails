@@ -25,6 +25,15 @@ gem "bootsnap", require: false
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
 
+# Soft delete (sets discarded_at; rows stay in the database)
+gem "discard", "~> 1.3"
+
+# Money attributes backed by *_cents columns; default currency BRL (see config/initializers/money.rb)
+gem "money-rails", "~> 1.15"
+
+# Locale data for Rails (errors, dates, number formats) — add app strings under config/locales/*.yml
+gem "rails-i18n", "~> 8.1"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -37,4 +46,22 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Fake data for seeds / tests
+  gem "faker", "~> 3.5"
+
+  # Code coverage report: COVERAGE=true bin/docker-test (output in coverage/)
+  gem "simplecov", "~> 0.22", require: false
+
+  # Mocking / stubbing (any_instance for controller destroy else branches)
+  gem "mocha", "~> 2.1", require: false
+end
+
+group :development do
+  # N+1 query detection (see config/environments/development.rb)
+  gem "bullet", "~> 8.0"
+
+  # Auto-run Minitest on file save (see compose.yml service `guard`)
+  gem "guard", "~> 2.19"
+  gem "guard-minitest", "~> 2.4"
 end
