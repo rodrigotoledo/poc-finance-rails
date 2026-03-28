@@ -1,0 +1,42 @@
+ARG RUBY_VERSION=4.0.2
+
+FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim as base
+
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+RUN apt-get update && apt-get install -y \
+  curl \
+  libjemalloc2 \
+  nodejs \
+  libvips \
+  libpq-dev \
+  postgresql-client \
+  libyaml-dev \
+  build-essential \
+  pkg-config \
+  sudo \
+  git \
+  zlib1g-dev \
+  && rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Create user with matching UID/GID from host
+RUN groupadd -g ${GROUP_ID} appuser && useradd -u ${USER_ID} -g ${GROUP_ID} -m appuser
+
+# Create directories and set permissions
+RUN sudo mkdir -p /app/tmp /app/log /app/db && \
+    sudo chown -R appuser:appuser /app && \
+    sudo chmod -R 775 /app/tmp /app/log && \
+    sudo chmod g+s /app/db /app/tmp /app/log
+
+USER appuser
+
+WORKDIR /app
+COPY --chown=appuser:appuser Gemfile* ./
+RUN gem install bundler
+RUN bundle lock --add-platform x86_64-linux
+RUN bundle install
+RUN gem install foreman
+COPY --chown=appuser:appuser . /app
+RUN rm -rf tmp/*
+RUN echo 'export PS1="\[\e[32m\]\u@\h\[\e[m\]:\[\e[34m\]\w\[\e[m\] \[\e[33m\](\$GIT_BRANCH)\[\e[m\]\$ "' >> /home/appuser/.bashrc

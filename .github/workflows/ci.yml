@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      RAILS_ENV: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: .ruby-version
+        bundler-cache: true
+
+    - name: Setup test database
+      run: |
+        bin/rails db:create RAILS_ENV=test
+        bin/rails db:schema:load RAILS_ENV=test
+
+    - name: Run tests
+      run: bundle exec rspec --format progress --format RspecJunitFormatter --out test-results/rspec.xml
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: test-results/
+
+    - name: Check test coverage
+      run: |
+        if [ -f coverage/.last_run.json ]; then
+          COVERAGE=$(ruby -rjson -e "puts JSON.parse(File.read('coverage/.last_run.json'))['result']['line']")
+          echo "Coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ Coverage is below 80%"
+            exit 1
+          else
+            echo "✅ Coverage is above 80%"
+          fi
+        fi
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage
+        path: coverage/
+
+  scan_ruby:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: .ruby-version
+        bundler-cache: true
+
+    - name: Scan for common Rails security vulnerabilities using static analysis
+      run: bin/brakeman --no-pager
+
+  scan_js:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: .ruby-version
+        bundler-cache: true
+
+    - name: Scan for security vulnerabilities in JavaScript dependencies
+      run: bin/importmap audit
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: .ruby-version
+        bundler-cache: true
+
+    - name: Lint Ruby code for consistent style
+      run: bin/rubocop -f github
+
+    - name: Lint ERB templates
+      run: bundle exec erb_lint --lint-all --format compact
