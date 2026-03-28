@@ -30,6 +30,8 @@ require "mocha/minitest"
 
 Dir[Rails.root.join("test/support/**/*.rb")].sort.each { |f| require f }
 
+ActionDispatch::IntegrationTest.include ActiveJobDrain
+
 module ActiveSupport
   class TestCase
     include ApiFixtures

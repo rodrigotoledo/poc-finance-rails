@@ -29,7 +29,11 @@ module CreditoPoc
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
-    config.solid_queue.connects_to = { database: { writing: :queue } }
+    # mission_control-jobs mounts an HTML dashboard — it needs these middlewares
+    # even in API-only mode (they are stripped by config.api_only = true by default).
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore
+    config.middleware.use ActionDispatch::Flash
 
     config.i18n.available_locales = %i[en pt-BR]
     config.i18n.default_locale = :en

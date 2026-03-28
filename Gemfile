@@ -34,6 +34,18 @@ gem "money-rails", "~> 1.15"
 # Locale data for Rails (errors, dates, number formats) — add app strings under config/locales/*.yml
 gem "rails-i18n", "~> 8.1"
 
+# Web dashboard for Solid Queue (equivalent to Sidekiq Web)
+# sprockets-rails is required because mission_control-jobs accesses config.assets,
+# which is stripped out in api_only mode.
+gem "mission_control-jobs"
+gem "sprockets-rails"
+
+# CSV/XLSX import: roo reads both formats; caxlsx generates sample XLSX files
+# csv is explicitly required because Ruby 4.0 removed it from default gems
+gem "csv", "~> 3.3"
+gem "roo", "~> 2.10"
+gem "caxlsx", "~> 3.4"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

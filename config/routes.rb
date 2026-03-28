@@ -5,12 +5,16 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Solid Queue web dashboard — http://localhost:3000/jobs
+  mount MissionControl::Jobs::Engine, at: "/jobs"
+
   namespace :api do
     namespace :v1 do
       resources :originators
       resources :receivables
       resources :credit_operations
       resources :regulatory_gaps
+      resources :imports, only: %i[index show create]
     end
   end
 end

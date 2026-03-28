@@ -1,4 +1,7 @@
 ---
 # App-specific strings (EN). Prefer namespaces, e.g. `api.errors.*`.
 # ActiveRecord defaults come from rails-i18n; model-specific keys live in models.en.yml.
-en: {}
+en:
+  imports:
+    file_required: "File is required."
+    unsupported_format: "Unsupported file format."
