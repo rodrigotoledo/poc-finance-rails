@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crédito POC — API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <style>
+    body { margin: 0; }
+    #swagger-ui .topbar { background: #18181b; }
+    #swagger-ui .topbar-wrapper img { content: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"); }
+    #swagger-ui .topbar-wrapper a::after { content: 'Crédito POC API'; color: white; font-size: 18px; font-weight: 600; margin-left: 12px; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: "/api-docs/openapi.json",
+      dom_id: '#swagger-ui',
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+      layout: "BaseLayout",
+      deepLinking: true,
+      tryItOutEnabled: true,
+    });
+  </script>
+</body>
+</html>

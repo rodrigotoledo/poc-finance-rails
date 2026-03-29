@@ -1,3 +1,7 @@
+# Serviços Rails (app + guard). Postgres e Redis estão em ../compose.infra.yml na raiz do monorepo.
+# Arranque típico (a partir da raiz poc-financer; Rails primeiro para .env):
+#   docker compose -f credito-poc/compose.yml -f compose.infra.yml up --build
+#
 networks:
   backend:
 
@@ -49,42 +53,5 @@ services:
       db:
         condition: service_healthy
 
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: credito_poc_development
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - backend
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    networks:
-      - backend
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-
 volumes:
   bundle:
-  postgres_data:
-  redis_data:

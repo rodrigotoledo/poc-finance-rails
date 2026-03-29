@@ -1,27 +1,24 @@
 # frozen_string_literal: true
 
 module Api
-  module V1
+  module V2
     class CreditOperationsController < BaseController
       before_action :set_credit_operation, only: %i[show update destroy]
 
       def index
         scope = CreditOperation.kept
-                 .joins(:receivable, :originator)
-                 .merge(Receivable.kept)
-                 .merge(Originator.kept)
-                 .includes(:receivable, :originator)
-                 .order(:created_at)
+                               .joins(:receivable, :originator)
+                               .merge(Receivable.kept).merge(Originator.kept)
+                               .includes(:receivable, :originator)
+                               .order(:created_at)
         scope = scope.where(originator_id: params[:originator_id]) if params[:originator_id].present?
         scope = scope.where(receivable_id: params[:receivable_id]) if params[:receivable_id].present?
-        pagy, records = paginate_collection(scope)
-        data = records.as_json(
+        render json: scope.as_json(
           include: {
             receivable: { only: %i[id reference_number amount_cents due_on status] },
             originator: { only: %i[id legal_name tax_id] }
           }
         )
-        render json: { data: data, meta: pagination_meta(pagy) }
       end
 
       def show
@@ -65,13 +62,7 @@ module Api
       end
 
       def credit_operation_params
-        params.require(:credit_operation).permit(
-          :receivable_id,
-          :originator_id,
-          :funded_amount_cents,
-          :rate,
-          :status
-        )
+        params.require(:credit_operation).permit(:receivable_id, :originator_id, :funded_amount_cents, :rate, :status)
       end
     end
   end

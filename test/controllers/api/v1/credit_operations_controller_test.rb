@@ -13,7 +13,7 @@ module Api
       test "GET index excludes discarded credit operations" do
         get "/api/v1/credit_operations"
         assert_response :success
-        ids = JSON.parse(response.body).map { |row| row["id"] }
+        ids = JSON.parse(response.body)["data"].map { |row| row["id"] }
         assert_not_includes ids, credit_operations(:discarded_op).id
         assert_includes ids, credit_operations(:op_draft).id
       end
@@ -24,7 +24,7 @@ module Api
         op = create_credit_operation!(receivable: r, originator: o)
         get "/api/v1/credit_operations"
         assert_response :success
-        rows = JSON.parse(response.body)
+        rows = JSON.parse(response.body)["data"]
         found = rows.find { |row| row["id"] == op.id }
         assert found
         assert_equal r.id, found["receivable"]["id"]
@@ -119,7 +119,7 @@ module Api
         get "/api/v1/credit_operations",
             params: { originator_id: o.id, receivable_id: r.id }
         assert_response :success
-        rows = JSON.parse(response.body)
+        rows = JSON.parse(response.body)["data"]
         assert_equal 1, rows.size
         assert_equal op.id, rows.first["id"]
       end

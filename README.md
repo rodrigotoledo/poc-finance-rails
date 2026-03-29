@@ -1,8 +1,12 @@
-# Crédito POC — Infraestrutura de Mercado de Crédito
+# Crédito POC — Serviço Rails (API)
 
-Stack financeiro com Rails 8 API · AWS-ready · BACEN-compliant
+Este README cobre **setup local**, **Docker**, **API REST**, importações e **comandos** do serviço em `credito-poc/`.
 
-## Stack
+Para **visão de produto**, **arquitetura alvo** (Next.js, NestJS, fronteiras de domínio, regulatório) e **roadmap**, use o README da raiz: **[../README.md](../README.md)**.
+
+---
+
+## Stack (este serviço)
 
 | Camada | Tecnologia |
 |--------|-----------|
@@ -21,13 +25,29 @@ Stack financeiro com Rails 8 API · AWS-ready · BACEN-compliant
 
 ## Setup inicial
 
-O arquivo de stack é `compose.yml` (Docker Compose usa esse arquivo por padrão ao rodar na raiz do projeto).
+Postgres e Redis estão no [compose.infra.yml](../compose.infra.yml) na **raiz** do monorepo; este diretório tem só os serviços Rails (`app`, `guard`) em `compose.yml`. O Compose faz **merge** dos dois ficheiros (mesmo projeto `poc-financer`).
+
+**Opção A — a partir da raiz do repositório** (`poc-financer/`), só Rails + infra:
 
 ```bash
 git clone <repo>
+cd poc-financer/credito-poc
+cp .env.example .env
+cd ..
+docker compose -f credito-poc/compose.yml -f compose.infra.yml up --build
+```
+
+**Opção B — a partir deste diretório** (`credito-poc/`), para não repetir `-f` em todo o lado:
+
+```bash
 cd credito-poc
 cp .env.example .env
+export COMPOSE_FILE=compose.yml:../compose.infra.yml
+docker compose build --no-cache app guard   # primeira vez ou após mudar USER_ID/GROUP_ID
+docker compose up --build
 ```
+
+Os exemplos abaixo assumem **`COMPOSE_FILE=compose.yml:../compose.infra.yml`** exportado em `credito-poc/` (ou use os mesmos `-f` explicitamente).
 
 No `.env`, além das chaves Rails, defina **`USER_ID`** e **`GROUP_ID`** com o mesmo usuário do macOS (evita arquivos criados pelo Docker com dono errado e o Cursor não salvar):
 
@@ -37,18 +57,13 @@ id -g   # ex.: 20
 # Edite .env: USER_ID=501 e GROUP_ID=20 (seus valores)
 ```
 
-Depois:
-
-```bash
-docker compose build --no-cache app guard   # primeira vez ou após mudar USER_ID/GROUP_ID
-docker compose up --build
-```
+**Stack completo (Rails + Nest + infra)** na raiz: `docker compose up --build` (ver [compose.yml](../compose.yml) no repositório).
 
 **Se ainda não conseguir editar** (ex.: `app/jobs/application_job.rb` não salva no Cursor), na raiz do projeto:
 
 ```bash
 ./bin/fix-host-file-permissions
-./bin/verify-docker-user   # UID do container deve ser igual ao `id -u` do Mac; se não, ajuste USER_ID/GROUP_ID no .env e: docker compose build --no-cache app guard
+./bin/verify-docker-user   # UID do container deve ser igual ao `id -u` do Mac; se não, ajuste USER_ID/GROUP_ID no .env e: docker compose build --no-cache app guard  (com COMPOSE_FILE como no setup)
 ```
 
 O script de permissões faz `chown`, `chmod u+rwX`, no macOS também `chflags nouchg` e `xattr -cr` (remove atributos que às vezes travam o editor).
@@ -167,7 +182,7 @@ curl http://localhost:3000/api/v1/imports
 | `receivables_batch_4.*` | Amount negativo ou não-numérico | ~15 % |
 | `receivables_batch_5.*` | Originator desconhecido / linha em branco | ~5 % |
 
-Para regenerar os arquivos de amostra:
+Para regenerar os arquivos de amostra (com `COMPOSE_FILE` exportado em `credito-poc/`):
 
 ```bash
 docker compose run --rm app rake samples:generate
@@ -218,6 +233,8 @@ O painel mostra filas, workers ativos, jobs em execução, falhos e tarefas reco
 
 ## Comandos do dia-a-dia
 
+Na pasta `credito-poc/`, exporte `COMPOSE_FILE=compose.yml:../compose.infra.yml` (como no setup) para que estes comandos incluam Postgres e Redis.
+
 ```bash
 docker compose up --build          # sobe tudo (build + start)
 docker compose up                  # sobe sem rebuild
@@ -260,7 +277,7 @@ Forçar recriação do banco e seed:
 FORCE_DB_CREATE=true FORCE_DB_SEED=true docker compose up --build
 ```
 
-Reset completo (apaga volumes):
+Reset completo (apaga volumes de Postgres/Redis deste projeto; use o mesmo `COMPOSE_FILE`):
 
 ```bash
 docker compose down -v
@@ -284,7 +301,8 @@ Copie `.env.example` para `.env`. Os valores já vêm preenchidos com defaults p
 
 | DB | Uso |
 |----|-----|
-| 0 | Cache / jobs |
+| 0 | Cache / jobs / Solid Queue (Rails) |
+| 1 | Reservado ao Nest em Docker ([credito-poc-nestjs/.env.example](../credito-poc-nestjs/.env.example)) |
 
 ## Gems (domínio + dev)
 
@@ -301,7 +319,7 @@ Copie `.env.example` para `.env`. Os valores já vêm preenchidos com defaults p
 | [roo](https://github.com/roo-rb/roo) | Leitura de **XLSX** na importação via `Roo::Excelx`. |
 | [caxlsx](https://github.com/caxlsx/caxlsx) | Geração dos XLSX de exemplo em `lib/samples/` (`rake samples:generate`). |
 
-Após alterar o `Gemfile`: `docker compose run --rm app bundle install`.
+Após alterar o `Gemfile`: `docker compose run --rm app bundle install` (com o mesmo `COMPOSE_FILE` que no setup).
 
 Não usamos **annotate** / anotação automática de schema nos models: o gem clássico não resolve com ActiveRecord 8.x; manteremos só o que o `db/schema.rb` e o código já documentam.
 

@@ -1,16 +1,15 @@
 # frozen_string_literal: true
 
 module Api
-  module V1
+  module V2
     class ReceivablesController < BaseController
       before_action :set_receivable, only: %i[show update destroy]
 
       def index
-        scope = Receivable.kept.joins(:originator).merge(Originator.kept).includes(:originator).order(:created_at)
+        scope = Receivable.kept.joins(:originator).merge(Originator.kept)
+                          .includes(:originator).order(:created_at)
         scope = scope.where(originator_id: params[:originator_id]) if params[:originator_id].present?
-        pagy, records = paginate_collection(scope)
-        data = records.as_json(include: { originator: { only: %i[id legal_name tax_id] } })
-        render json: { data: data, meta: pagination_meta(pagy) }
+        render json: scope.as_json(include: { originator: { only: %i[id legal_name tax_id] } })
       end
 
       def show

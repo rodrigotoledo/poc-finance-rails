@@ -1,0 +1,172 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Crédito POC API v2",
+    "version": "2.0.0",
+    "description": "API RESTful para o sistema de crédito. Padrão OpenAPI 3.1 (anteriormente chamado Swagger)."
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Desenvolvimento local" }
+  ],
+  "tags": [
+    { "name": "Dashboard", "description": "Estatísticas e eventos em tempo real" },
+    { "name": "Originadores" },
+    { "name": "Recebíveis" },
+    { "name": "Operações de Crédito" },
+    { "name": "Gaps Regulatórios" }
+  ],
+  "paths": {
+    "/api/v2/dashboard": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Estatísticas consolidadas",
+        "responses": {
+          "200": {
+            "description": "Stats do sistema",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DashboardStats" } } }
+          }
+        }
+      }
+    },
+    "/api/v2/events": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Stream SSE de eventos em tempo real (Redis pub/sub)",
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events stream",
+            "content": { "text/event-stream": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    },
+    "/api/v2/originators": {
+      "get": {
+        "tags": ["Originadores"],
+        "summary": "Lista todos os originadores ativos",
+        "responses": {
+          "200": { "description": "Lista", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Originator" } } } } }
+        }
+      },
+      "post": {
+        "tags": ["Originadores"],
+        "summary": "Cria originador",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OriginatorInput" } } } },
+        "responses": {
+          "201": { "description": "Criado" },
+          "422": { "description": "Erro de validação" }
+        }
+      }
+    },
+    "/api/v2/originators/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+      "get": { "tags": ["Originadores"], "summary": "Busca originador", "responses": { "200": { "description": "OK" } } },
+      "patch": { "tags": ["Originadores"], "summary": "Atualiza originador", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OriginatorInput" } } } }, "responses": { "200": { "description": "OK" } } },
+      "delete": { "tags": ["Originadores"], "summary": "Descarta originador (soft delete)", "responses": { "204": { "description": "No content" } } }
+    },
+    "/api/v2/receivables": {
+      "get": {
+        "tags": ["Recebíveis"],
+        "summary": "Lista recebíveis ativos",
+        "parameters": [{ "name": "originator_id", "in": "query", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Lista" } }
+      },
+      "post": {
+        "tags": ["Recebíveis"],
+        "summary": "Cria recebível",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReceivableInput" } } } },
+        "responses": { "201": { "description": "Criado" }, "422": { "description": "Erro de validação" } }
+      }
+    },
+    "/api/v2/receivables/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+      "get": { "tags": ["Recebíveis"], "summary": "Busca recebível", "responses": { "200": { "description": "OK" } } },
+      "patch": { "tags": ["Recebíveis"], "summary": "Atualiza recebível", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReceivableInput" } } } }, "responses": { "200": { "description": "OK" } } },
+      "delete": { "tags": ["Recebíveis"], "summary": "Descarta recebível (soft delete)", "responses": { "204": { "description": "No content" } } }
+    },
+    "/api/v2/credit_operations": {
+      "get": {
+        "tags": ["Operações de Crédito"],
+        "summary": "Lista operações de crédito",
+        "parameters": [
+          { "name": "originator_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "receivable_id", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Lista" } }
+      },
+      "post": {
+        "tags": ["Operações de Crédito"],
+        "summary": "Cria operação de crédito",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreditOperationInput" } } } },
+        "responses": { "201": { "description": "Criado" }, "422": { "description": "Erro de validação" } }
+      }
+    },
+    "/api/v2/credit_operations/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+      "get": { "tags": ["Operações de Crédito"], "summary": "Busca operação", "responses": { "200": { "description": "OK" } } },
+      "patch": { "tags": ["Operações de Crédito"], "summary": "Atualiza operação", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreditOperationInput" } } } }, "responses": { "200": { "description": "OK" } } },
+      "delete": { "tags": ["Operações de Crédito"], "summary": "Descarta operação (soft delete)", "responses": { "204": { "description": "No content" } } }
+    },
+    "/api/v2/regulatory_gaps": {
+      "get": {
+        "tags": ["Gaps Regulatórios"],
+        "summary": "Lista gaps regulatórios",
+        "parameters": [{ "name": "credit_operation_id", "in": "query", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Lista" } }
+      },
+      "post": {
+        "tags": ["Gaps Regulatórios"],
+        "summary": "Cria gap regulatório",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegulatoryGapInput" } } } },
+        "responses": { "201": { "description": "Criado" }, "422": { "description": "Erro de validação" } }
+      }
+    },
+    "/api/v2/regulatory_gaps/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+      "get": { "tags": ["Gaps Regulatórios"], "summary": "Busca gap", "responses": { "200": { "description": "OK" } } },
+      "patch": { "tags": ["Gaps Regulatórios"], "summary": "Atualiza gap", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegulatoryGapInput" } } } }, "responses": { "200": { "description": "OK" } } },
+      "delete": { "tags": ["Gaps Regulatórios"], "summary": "Descarta gap (soft delete)", "responses": { "204": { "description": "No content" } } }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DashboardStats": {
+        "type": "object",
+        "properties": {
+          "originators": { "type": "object", "properties": { "total": { "type": "integer" } } },
+          "receivables": { "type": "object", "properties": { "total": { "type": "integer" }, "total_amount_cents": { "type": "integer" }, "by_status": { "type": "object" } } },
+          "credit_operations": { "type": "object", "properties": { "total": { "type": "integer" }, "total_funded_cents": { "type": "integer" }, "avg_rate": { "type": "string" }, "by_status": { "type": "object" } } },
+          "regulatory_gaps": { "type": "object", "properties": { "total": { "type": "integer" }, "open": { "type": "integer" } } },
+          "imports": { "type": "object", "properties": { "total": { "type": "integer" }, "pending": { "type": "integer" }, "processing": { "type": "integer" } } }
+        }
+      },
+      "Originator": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }, "legal_name": { "type": "string" }, "tax_id": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }, "discarded_at": { "type": "string", "nullable": true }
+        }
+      },
+      "OriginatorInput": {
+        "type": "object",
+        "required": ["originator"],
+        "properties": { "originator": { "type": "object", "required": ["legal_name", "tax_id"], "properties": { "legal_name": { "type": "string" }, "tax_id": { "type": "string" } } } }
+      },
+      "ReceivableInput": {
+        "type": "object",
+        "required": ["receivable"],
+        "properties": { "receivable": { "type": "object", "required": ["originator_id", "reference_number", "amount_cents", "due_on"], "properties": { "originator_id": { "type": "integer" }, "reference_number": { "type": "string" }, "amount_cents": { "type": "integer" }, "due_on": { "type": "string", "format": "date" }, "status": { "type": "string", "enum": ["pending", "eligible", "advanced", "cancelled"] } } } }
+      },
+      "CreditOperationInput": {
+        "type": "object",
+        "required": ["credit_operation"],
+        "properties": { "credit_operation": { "type": "object", "required": ["receivable_id", "originator_id", "funded_amount_cents", "rate"], "properties": { "receivable_id": { "type": "integer" }, "originator_id": { "type": "integer" }, "funded_amount_cents": { "type": "integer" }, "rate": { "type": "number" }, "status": { "type": "string", "enum": ["draft", "approved", "settled", "cancelled"] } } } }
+      },
+      "RegulatoryGapInput": {
+        "type": "object",
+        "required": ["regulatory_gap"],
+        "properties": { "regulatory_gap": { "type": "object", "required": ["area", "status"], "properties": { "credit_operation_id": { "type": "integer", "nullable": true }, "area": { "type": "string" }, "code": { "type": "string", "nullable": true }, "description": { "type": "string", "nullable": true }, "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] }, "status": { "type": "string", "enum": ["open", "resolved", "ignored"] } } } }
+      }
+    }
+  }
+}

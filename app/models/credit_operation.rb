@@ -2,6 +2,7 @@
 
 class CreditOperation < ApplicationRecord
   include Discard::Model
+  include Publishable
 
   STATUSES = %w[draft approved settled cancelled].freeze
 
@@ -14,6 +15,10 @@ class CreditOperation < ApplicationRecord
   validates :rate, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :status, inclusion: { in: STATUSES }
   validate :originator_matches_receivable
+
+  def event_meta
+    { status: status, funded_amount_cents: funded_amount_cents, rate: rate.to_s }
+  end
 
   private
 

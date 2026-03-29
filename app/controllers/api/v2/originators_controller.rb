@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
 module Api
-  module V1
+  module V2
     class OriginatorsController < BaseController
       before_action :set_originator, only: %i[show update destroy]
 
       def index
-        pagy, records = paginate_collection(Originator.kept.order(:created_at))
-        render json: { data: records, meta: pagination_meta(pagy) }
+        render json: Originator.kept.order(:created_at)
       end
 
       def show

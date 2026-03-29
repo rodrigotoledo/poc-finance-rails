@@ -5,6 +5,9 @@ module Compliance
     self.table_name = "regulatory_gaps"
 
     include Discard::Model
+    include Publishable
+
+    def self.event_entity = "regulatory_gaps"
 
     belongs_to :credit_operation, optional: true
 

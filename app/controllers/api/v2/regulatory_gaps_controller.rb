@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 module Api
-  module V1
+  module V2
     class RegulatoryGapsController < BaseController
       before_action :set_regulatory_gap, only: %i[show update destroy]
 
       def index
         scope = Compliance::RegulatoryGap.kept.order(:created_at)
         scope = scope.where(credit_operation_id: params[:credit_operation_id]) if params[:credit_operation_id].present?
-        pagy, records = paginate_collection(scope)
-        render json: { data: records, meta: pagination_meta(pagy) }
+        render json: scope
       end
 
       def show
@@ -48,14 +47,7 @@ module Api
       end
 
       def regulatory_gap_params
-        params.require(:regulatory_gap).permit(
-          :area,
-          :code,
-          :description,
-          :severity,
-          :status,
-          :credit_operation_id
-        )
+        params.require(:regulatory_gap).permit(:area, :code, :description, :severity, :status, :credit_operation_id)
       end
     end
   end

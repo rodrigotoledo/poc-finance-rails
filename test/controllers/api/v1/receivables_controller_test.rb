@@ -13,7 +13,7 @@ module Api
       test "GET index excludes discarded receivables" do
         get "/api/v1/receivables"
         assert_response :success
-        ids = JSON.parse(response.body).map { |row| row["id"] }
+        ids = JSON.parse(response.body)["data"].map { |row| row["id"] }
         assert_not_includes ids, receivables(:discarded_receivable).id
         assert_includes ids, receivables(:ref_acme_001).id
       end
@@ -23,7 +23,7 @@ module Api
         r = create_receivable!(originator: o, reference_number: "IDX-#{SecureRandom.hex(2)}")
         get "/api/v1/receivables"
         assert_response :success
-        rows = JSON.parse(response.body)
+        rows = JSON.parse(response.body)["data"]
         found = rows.find { |row| row["id"] == r.id }
         assert found
         assert_equal o.id, found["originator"]["id"]
@@ -36,7 +36,7 @@ module Api
         create_receivable!(originator: o2, reference_number: "F2-#{SecureRandom.hex(2)}")
         get "/api/v1/receivables", params: { originator_id: o1.id }
         assert_response :success
-        ids = JSON.parse(response.body).map { |row| row["id"] }
+        ids = JSON.parse(response.body)["data"].map { |row| row["id"] }
         assert_includes ids, r1.id
         assert_equal 1, ids.size
       end

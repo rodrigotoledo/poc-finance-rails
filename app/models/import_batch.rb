@@ -1,8 +1,12 @@
 class ImportBatch < ApplicationRecord
+  include Publishable
+
   STATUSES   = %w[pending processing completed failed].freeze
   FILE_TYPES = %w[csv xlsx].freeze
 
   belongs_to :originator, optional: true
+
+  def self.event_entity = "imports"
 
   validates :filename,  presence: true
   validates :file_path, presence: true

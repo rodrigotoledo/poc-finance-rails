@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 module Api
-  module V1
+  module V2
     class BaseController < ApplicationController
       include LocaleFromRequest
-      include Api::V1::PaginatedJson
     end
   end
 end

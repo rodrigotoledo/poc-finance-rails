@@ -25,6 +25,9 @@ gem "bootsnap", require: false
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
 
+# API JSON: ?page=&per_page= nas listagens (integração com TanStack Table manualPagination)
+gem "pagy", "~> 9.0"
+
 # Soft delete (sets discarded_at; rows stay in the database)
 gem "discard", "~> 1.3"
 

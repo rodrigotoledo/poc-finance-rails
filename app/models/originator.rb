@@ -2,6 +2,7 @@
 
 class Originator < ApplicationRecord
   include Discard::Model
+  include Publishable
 
   has_many :receivables, dependent: :restrict_with_error
   has_many :credit_operations, dependent: :restrict_with_error

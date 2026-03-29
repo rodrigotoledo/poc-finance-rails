@@ -21,7 +21,7 @@ module Api
         )
         get "/api/v1/regulatory_gaps", params: { credit_operation_id: op.id }
         assert_response :success
-        rows = JSON.parse(response.body)
+        rows = JSON.parse(response.body)["data"]
         assert_equal 1, rows.size
         assert_equal gap.id, rows.first["id"]
       end
@@ -88,7 +88,7 @@ module Api
         gone.discard!
         get "/api/v1/regulatory_gaps"
         assert_response :success
-        ids = JSON.parse(response.body).map { |row| row["id"] }
+        ids = JSON.parse(response.body)["data"].map { |row| row["id"] }
         assert_includes ids, kept.id
         assert_not_includes ids, gone.id
       end

@@ -96,8 +96,8 @@ module Api
         get "/api/v1/imports"
         assert_response :success
         body = JSON.parse(response.body)
-        assert body.is_a?(Array)
-        assert body.any? { |b| b["filename"] == "a.csv" }
+        assert body.key?("data")
+        assert body["data"].any? { |b| b["filename"] == "a.csv" }
       end
 
       private

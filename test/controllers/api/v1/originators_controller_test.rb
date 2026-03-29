@@ -13,9 +13,21 @@ module Api
       test "GET index excludes discarded originators" do
         get "/api/v1/originators"
         assert_response :success
-        ids = JSON.parse(response.body).map { |row| row["id"] }
+        body = JSON.parse(response.body)
+        assert body.key?("data")
+        assert body.key?("meta")
+        ids = body["data"].map { |row| row["id"] }
         assert_not_includes ids, originators(:discarded_one).id
         assert_includes ids, originators(:acme).id
+      end
+
+      test "GET index returns pagination meta" do
+        get "/api/v1/originators"
+        assert_response :success
+        meta = JSON.parse(response.body)["meta"]
+        assert_equal %w[page per_page total_count total_pages], meta.keys.sort
+        assert meta["page"] >= 1
+        assert meta["total_pages"] >= 1
       end
 
       test "GET index returns created originators as json" do
@@ -23,7 +35,7 @@ module Api
         get "/api/v1/originators"
         assert_response :success
         body = JSON.parse(response.body)
-        ids = body.map { |row| row["id"] }
+        ids = body["data"].map { |row| row["id"] }
         assert_includes ids, o.id
       end
 

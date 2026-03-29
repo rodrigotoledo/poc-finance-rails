@@ -1,25 +1,19 @@
+# frozen_string_literal: true
+
 module Api
-  module V1
+  module V2
     class ImportsController < BaseController
       ALLOWED_EXTENSIONS = %w[.csv .xlsx].freeze
 
-      # GET /api/v1/imports
       def index
-        scope = ImportBatch.order(created_at: :desc)
-        pagy, records = paginate_collection(scope)
-        data = records.map { |b| serialize(b) }
-        render json: { data: data, meta: pagination_meta(pagy) }
+        batches = ImportBatch.order(created_at: :desc).limit(100)
+        render json: batches.map { |b| serialize(b) }
       end
 
-      # GET /api/v1/imports/:id
       def show
         render json: serialize(batch)
       end
 
-      # POST /api/v1/imports
-      # Params:
-      #   file         — multipart file (required)
-      #   originator_id — optional; used when rows don't carry originator_tax_id
       def create
         unless params[:file].present?
           return render json: { error: t("imports.file_required") }, status: :unprocessable_entity
