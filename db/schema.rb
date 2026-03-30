@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_03_28_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_30_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -30,6 +30,25 @@ ActiveRecord::Schema[8.1].define(version: 2025_03_28_210000) do
     t.index ["discarded_at"], name: "index_credit_operations_on_discarded_at"
     t.index ["originator_id"], name: "index_credit_operations_on_originator_id"
     t.index ["receivable_id"], name: "index_credit_operations_on_receivable_id"
+  end
+
+  create_table "exports", force: :cascade do |t|
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.string "deliver_to_email"
+    t.string "entity", null: false
+    t.text "error_message"
+    t.string "file_path"
+    t.string "filename"
+    t.string "range", null: false
+    t.string "requested_by_email"
+    t.integer "row_count"
+    t.datetime "started_at"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_exports_on_created_at"
+    t.index ["entity"], name: "index_exports_on_entity"
+    t.index ["status"], name: "index_exports_on_status"
   end
 
   create_table "import_batches", force: :cascade do |t|

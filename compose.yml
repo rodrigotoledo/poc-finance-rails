@@ -37,6 +37,21 @@ services:
       redis:
         condition: service_healthy
 
+  sidekiq:
+    <<: *app_defaults
+    environment:
+      BUNDLE_GEMFILE: /app/Gemfile
+      # Enable/disable the 5s scheduler tick (POC)
+      DASHBOARD_TICK_ENABLED: ${DASHBOARD_TICK_ENABLED:-1}
+      SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-5}
+      REDIS_STREAM_MAXLEN: ${REDIS_STREAM_MAXLEN:-50000}
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   # Minitest + Guard: watch files and re-run tests (polling for macOS Docker volumes).
   # Usage: docker compose up guard   then in another terminal: docker compose exec guard bash
   # Or attach: docker compose attach guard

@@ -8,6 +8,11 @@ module Api
       def index
         scope = Compliance::RegulatoryGap.kept.order(:created_at)
         scope = scope.where(credit_operation_id: params[:credit_operation_id]) if params[:credit_operation_id].present?
+        scope = scope.where(status: params[:status]) if params[:status].present?
+        if params[:q].present?
+          q = "%#{params[:q].to_s.strip}%"
+          scope = scope.where("area ILIKE :q OR code ILIKE :q OR description ILIKE :q", q: q)
+        end
         pagy, records = paginate_collection(scope)
         render json: { data: records, meta: pagination_meta(pagy) }
       end

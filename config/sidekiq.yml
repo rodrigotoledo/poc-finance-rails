@@ -1,0 +1,17 @@
+:concurrency: <%= Integer(ENV.fetch("SIDEKIQ_CONCURRENCY", 5)) %>
+:queues:
+  - default
+  - imports
+  - exports
+
+:scheduler:
+  :enabled: true
+  :schedule:
+    dashboard_tick:
+      every: ["5s"]
+      class: "DashboardTickJob"
+      queue: default
+    import_reconcile:
+      every: ["10s"]
+      class: "ReconcileImportBatchesJob"
+      queue: default

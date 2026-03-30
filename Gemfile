@@ -4,6 +4,11 @@ source "https://rubygems.org"
 gem "rails", "~> 8.1.2"
 gem "pg", ">= 1.4"
 gem "redis", "~> 5.0"
+# Background jobs (ActiveJob adapter) + scheduler (5s ticks for POC dashboard)
+gem "sidekiq", "~> 7.3"
+gem "sidekiq-scheduler", "~> 5.0"
+# Sidekiq 7.3 + Ruby 4: pin while ConnectionPool 3 incompatibility
+gem "connection_pool", "< 3.0"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
@@ -73,6 +78,10 @@ group :development, :test do
 end
 
 group :development do
+  # Preview emails in browser (export CSV delivery)
+  gem "letter_opener", "~> 1.10"
+  gem "letter_opener_web", "~> 3.0"
+
   # N+1 query detection (see config/environments/development.rb)
   gem "bullet", "~> 8.0"
 

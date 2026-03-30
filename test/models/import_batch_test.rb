@@ -85,7 +85,7 @@ class ImportBatchTest < ActiveSupport::TestCase
 
     errs = 1_500.times.map { |i| { row: i, errors: [ "e" ] } }
     batch.record_chunk_result!(chunk_processed: 0, chunk_failed: 1_500, chunk_errors: errs)
-    batch.update_column(:total_rows, 3_000)
+    batch.update_column(:total_rows, 1_500)
 
     batch.record_chunk_result!(
       chunk_processed: 0,

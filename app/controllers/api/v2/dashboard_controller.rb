@@ -32,7 +32,9 @@ module Api
           imports: {
             total:      ImportBatch.count,
             pending:    ImportBatch.where(status: "pending").count,
-            processing: ImportBatch.where(status: "processing").count
+            processing: ImportBatch.where(status: "processing").count,
+            completed:  ImportBatch.where(status: "completed").count,
+            failed:     ImportBatch.where(status: "failed").count
           }
         }
       end

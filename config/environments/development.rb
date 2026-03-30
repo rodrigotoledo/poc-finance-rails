@@ -32,6 +32,10 @@ Rails.application.configure do
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
 
+  # Letter Opener (preview emails locally)
+  config.action_mailer.delivery_method = :letter_opener
+  config.action_mailer.perform_deliveries = true
+
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
 
@@ -52,6 +56,9 @@ Rails.application.configure do
 
   # Highlight code that enqueued background job in logs.
   config.active_job.verbose_enqueue_logs = true
+
+  # ActiveJob em background via Sidekiq (scheduler roda no processo do Sidekiq).
+  config.active_job.queue_adapter = :sidekiq
 
   # Highlight code that triggered redirect in logs.
   config.action_dispatch.verbose_redirect_logs = true

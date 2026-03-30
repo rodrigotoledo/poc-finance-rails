@@ -6,7 +6,16 @@ module Api
       before_action :set_originator, only: %i[show update destroy]
 
       def index
-        pagy, records = paginate_collection(Originator.kept.order(:created_at))
+        scope = Originator.kept.order(:created_at)
+        if params[:q].present?
+          # Accept masked inputs (e.g. "12.345.678/0001-90") by comparing digits-only too.
+          scope = scope.where(
+            "legal_name ILIKE :q OR tax_id ILIKE :q OR regexp_replace(tax_id, '\\D', '', 'g') ILIKE :qd",
+            q: q_like,
+            qd: q_digits_like
+          )
+        end
+        pagy, records = paginate_collection(scope)
         render json: { data: records, meta: pagination_meta(pagy) }
       end
 

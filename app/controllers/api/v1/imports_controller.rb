@@ -6,6 +6,8 @@ module Api
       # GET /api/v1/imports
       def index
         scope = ImportBatch.order(created_at: :desc)
+        scope = scope.where(status: params[:status]) if params[:status].present?
+        scope = scope.where("filename ILIKE :q", q: "%#{params[:q].to_s.strip}%") if params[:q].present?
         pagy, records = paginate_collection(scope)
         data = records.map { |b| serialize(b) }
         render json: { data: data, meta: pagination_meta(pagy) }

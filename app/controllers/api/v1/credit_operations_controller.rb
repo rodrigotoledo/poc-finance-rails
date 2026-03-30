@@ -14,6 +14,14 @@ module Api
                  .order(:created_at)
         scope = scope.where(originator_id: params[:originator_id]) if params[:originator_id].present?
         scope = scope.where(receivable_id: params[:receivable_id]) if params[:receivable_id].present?
+        scope = scope.where(status: params[:status]) if params[:status].present?
+        if params[:q].present?
+          scope = scope.where(
+            "originators.legal_name ILIKE :q OR originators.tax_id ILIKE :q OR regexp_replace(originators.tax_id, '\\D', '', 'g') ILIKE :qd OR receivables.reference_number ILIKE :q",
+            q: q_like,
+            qd: q_digits_like
+          )
+        end
         pagy, records = paginate_collection(scope)
         data = records.as_json(
           include: {
