@@ -83,6 +83,9 @@ Rails.application.configure do
   config.hosts << "app"
   config.hosts << "nest"
   config.hosts << /.*\.local\z/
+  # Túnel ngrok (se expuseres o Rails diretamente)
+  config.hosts << /\A[a-z0-9-]+\.ngrok-free\.app\z/
+  config.hosts << /\A[a-z0-9-]+\.ngrok\.io\z/
 
   config.after_initialize do
     next unless defined?(Bullet)
