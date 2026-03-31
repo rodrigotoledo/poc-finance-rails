@@ -6,7 +6,7 @@ gem "pg", ">= 1.4"
 gem "redis", "~> 5.0"
 # Background jobs (ActiveJob adapter) + scheduler (5s ticks for POC dashboard)
 gem "sidekiq", "~> 7.3"
-gem "sidekiq-scheduler", "~> 5.0"
+gem "sidekiq-scheduler", "~> 6.0"
 # Sidekiq 7.3 + Ruby 4: pin while ConnectionPool 3 incompatibility
 gem "connection_pool", "< 3.0"
 # Use the Puma web server [https://github.com/puma/puma]
