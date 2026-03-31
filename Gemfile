@@ -71,7 +71,7 @@ group :development, :test do
   gem "simplecov", "~> 0.22", require: false
 
   # Mocking / stubbing (any_instance for controller destroy else branches)
-  gem "mocha", "~> 2.1", require: false
+  gem "mocha", "~> 3.1", require: false
 end
 
 group :development do
