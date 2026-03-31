@@ -83,9 +83,8 @@ Rails.application.configure do
   config.hosts << "app"
   config.hosts << "nest"
   config.hosts << /.*\.local\z/
-  # Túnel ngrok (se expuseres o Rails diretamente)
-  config.hosts << /\A[a-z0-9-]+\.ngrok-free\.app\z/
-  config.hosts << /\A[a-z0-9-]+\.ngrok\.io\z/
+  # Permitir acesso via IP do host (LAN), ex.: http://192.168.0.10:3000
+  config.hosts << /\A\d{1,3}(?:\.\d{1,3}){3}\z/
 
   config.after_initialize do
     next unless defined?(Bullet)
