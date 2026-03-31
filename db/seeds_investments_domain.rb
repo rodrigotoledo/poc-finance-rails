@@ -1,23 +1,103 @@
 # frozen_string_literal: true
 
+require "faker"
+
+# Garante originadores/recebíveis/operações quando o ficheiro corre isolado (ex.: runner sem db/seeds.rb).
+module SeedsInvestmentsDomain
+  module_function
+
+  def bootstrap_credit_chain!(timestamp_now)
+    return if CreditOperation.exists?
+
+    puts "Bootstrapping originators/receivables/credit_operations (none found — required for investments)..."
+
+    if Originator.none?
+      originator_rows = 20.times.map do |i|
+        {
+          legal_name: "Bootstrap Originator #{i + 1} #{Faker::Company.name}",
+          tax_id: format("%014d", 8_000_000_000_000 + i),
+          created_at: timestamp_now,
+          updated_at: timestamp_now
+        }
+      end
+      Originator.insert_all(originator_rows)
+    end
+
+    originator_ids = Originator.pluck(:id)
+
+    if Receivable.none?
+      receivable_rows = 250.times.map do |i|
+        {
+          originator_id: originator_ids.sample,
+          reference_number: format("BOOT-%06d", i),
+          amount_cents: rand(100_000..10_000_000),
+          due_on: Faker::Date.forward(days: 365),
+          status: Receivable::STATUSES.sample,
+          created_at: timestamp_now,
+          updated_at: timestamp_now
+        }
+      end
+      Receivable.insert_all(receivable_rows)
+    end
+
+    receivable_to_originator = Receivable.pluck(:id, :originator_id).to_h
+    receivable_ids = receivable_to_originator.keys
+    if receivable_ids.empty?
+      raise "seeds_investments_domain: nenhum recebível na base; não é possível criar operações de crédito."
+    end
+
+    credit_operation_rows = 200.times.map do
+      rid = receivable_ids.sample
+      {
+        receivable_id: rid,
+        originator_id: receivable_to_originator[rid],
+        funded_amount_cents: rand(100_000..5_000_000),
+        rate: rand(0.01..0.10),
+        status: CreditOperation::STATUSES.sample,
+        created_at: timestamp_now,
+        updated_at: timestamp_now
+      }
+    end
+    CreditOperation.insert_all(credit_operation_rows)
+  end
+end
+
 # Dados de exemplo para tudo o que a migration `20260331120000_investments_funds_risks_domain`
 # criou ou alterou: investors, funds, investment_accounts, investments, financial_assets,
 # investment_risks, risk_assessments + colunas em receivables e credit_operations.
 #
-# Idempotente: se já existir pelo menos um investor, não volta a inserir (evita violar unicidade).
-# Para reexecutar: truncar tabelas dependentes ou apagar investors e correr de novo.
+# Reexecução: apaga primeiro o domínio de investimentos (ordem respeitando FKs) e volta a inserir,
+# para cada `db:seed` repor investidores, fundos e posições sem violar unicidade (tax_id, account_number).
+# O bloco principal em db/seeds.rb (originadores, recebíveis, etc.) continua a acumular linhas se correres
+# `db:seed` várias vezes; para base totalmente limpa usa `rails db:reset`.
 #
 # Consola Docker (exemplo):
 #   docker compose exec app bin/rails runner "load Rails.root.join('db/seeds_investments_domain.rb')"
 # ou:
 #   docker compose exec app bin/rails db:seed
 
-return if Investor.exists?
-
-puts "Seeding investments domain (funds, investors, accounts, investments, assets, risks)..."
+puts "Resetting investments domain (risks → investments → assets → assessments → accounts → funds → investors)..."
+InvestmentRisk.delete_all
+Investment.delete_all
+FinancialAsset.delete_all
+RiskAssessment.delete_all
+InvestmentAccount.delete_all
+Fund.delete_all
+Investor.delete_all
 
 timestamp_now = Time.current
 reference_date = Date.current
+
+SeedsInvestmentsDomain.bootstrap_credit_chain!(timestamp_now)
+
+CreditOperation.find_each do |credit_operation|
+  credit_operation.update_columns(
+    total_invested_cents: 0,
+    available_for_investment_cents: (credit_operation.funded_amount_cents * rand(0.2..0.8)).to_i
+  )
+end
+
+puts "Seeding investments domain (funds, investors, accounts, investments, assets, risks)..."
 
 # --- Investors (Publishable + tax_id único) ---
 investor_attribute_rows = 30.times.map do |investor_index|
@@ -33,73 +113,45 @@ Investor.insert_all(investor_attribute_rows)
 seed_investors = Investor.order(:id).to_a
 
 # --- Funds ---
-fund_attribute_rows = [
+fund_attribute_rows = rand(5..10).times.map do
+  status = Fund::STATUSES.sample
+  total_commitment_cents = rand(5_000_000_000..800_000_000_000)
+  allocated_amount_cents = case status
+                           when "closed"
+                             total_commitment_cents
+                           when "winding_up"
+                             rand((total_commitment_cents * 0.7).to_i..total_commitment_cents)
+                           else
+                             rand(0..(total_commitment_cents * 0.95).to_i)
+                           end
+  available_amount_cents = total_commitment_cents - allocated_amount_cents
+  inception_date, maturity_date = case status
+                                  when "closed"
+                                    maturity = reference_date - rand(1..730)
+                                    [maturity - rand(30..1_200), maturity]
+                                  when "winding_up"
+                                    inc = reference_date - rand(30..1_200)
+                                    [inc, reference_date + rand(0..365)]
+                                  else
+                                    inc = reference_date - rand(30..1_200)
+                                    mat = [nil, reference_date + rand(180..365 * 8)].sample
+                                    [inc, mat]
+                                  end
+
   {
-    name: "Fundo Recebíveis Alpha",
-    fund_type: "debt",
-    total_commitment_cents: 500_000_000_000,
-    allocated_amount_cents: 0,
-    available_amount_cents: 500_000_000_000,
-    inception_date: reference_date - 365,
-    maturity_date: reference_date + 365 * 5,
-    target_return_rate: 12.5,
-    status: "active",
-    created_at: timestamp_now,
-    updated_at: timestamp_now
-  },
-  {
-    name: "Fundo Crédito Privado Beta",
-    fund_type: "mixed",
-    total_commitment_cents: 200_000_000_000,
-    allocated_amount_cents: 0,
-    available_amount_cents: 200_000_000_000,
-    inception_date: reference_date - 180,
-    maturity_date: reference_date + 365 * 3,
-    target_return_rate: 10.0,
-    status: "active",
-    created_at: timestamp_now,
-    updated_at: timestamp_now
-  },
-  {
-    name: "Fundo Equity Gamma",
-    fund_type: "equity",
-    total_commitment_cents: 80_000_000_000,
-    allocated_amount_cents: 0,
-    available_amount_cents: 80_000_000_000,
-    inception_date: reference_date - 90,
-    maturity_date: nil,
-    target_return_rate: 15.0,
-    status: "active",
-    created_at: timestamp_now,
-    updated_at: timestamp_now
-  },
-  {
-    name: "Fundo Liquidando Delta",
-    fund_type: "debt",
-    total_commitment_cents: 10_000_000_000,
-    allocated_amount_cents: 9_500_000_000,
-    available_amount_cents: 500_000_000,
-    inception_date: reference_date - 700,
-    maturity_date: reference_date + 30,
-    target_return_rate: 8.0,
-    status: "winding_up",
-    created_at: timestamp_now,
-    updated_at: timestamp_now
-  },
-  {
-    name: "Fundo Encerrado Épsilon",
-    fund_type: "other",
-    total_commitment_cents: 5_000_000_000,
-    allocated_amount_cents: 5_000_000_000,
-    available_amount_cents: 0,
-    inception_date: reference_date - 1000,
-    maturity_date: reference_date - 30,
-    target_return_rate: 7.5,
-    status: "closed",
+    name: "Fundo #{Faker::Company.name}",
+    fund_type: Fund::FUND_TYPES.sample,
+    total_commitment_cents: total_commitment_cents,
+    allocated_amount_cents: allocated_amount_cents,
+    available_amount_cents: available_amount_cents,
+    inception_date: inception_date,
+    maturity_date: maturity_date,
+    target_return_rate: Faker::Commerce.price(range: 5.0..25.0).to_f.round(1),
+    status: status,
     created_at: timestamp_now,
     updated_at: timestamp_now
   }
-]
+end
 Fund.insert_all(fund_attribute_rows)
 seed_funds = Fund.order(:id).to_a
 seed_fund_primary_keys = seed_funds.map(&:id)
@@ -130,7 +182,7 @@ seed_investors.each_with_index do |investor, investor_index|
   }
 end
 InvestmentAccount.insert_all(investment_account_attribute_rows)
-investment_accounts_grouped_by_investor_id = InvestmentAccount.group_by(&:investor_id)
+investment_accounts_grouped_by_investor_id = InvestmentAccount.order(:id).group_by(&:investor_id)
 
 # --- Receivables: colunas collateral / discount / risk_weight ---
 Receivable.find_in_batches(batch_size: 250) do |receivable_batch|
@@ -164,14 +216,13 @@ credit_operations_for_investment_seeds.each_with_index do |credit_operation, cre
   investment_account = investment_accounts_grouped_by_investor_id[investor.id]&.first
   next unless investment_account
 
-  optional_fund_primary_key = (credit_operation_index % 7).zero? ? nil : seed_fund_primary_keys.sample
   funded_share = [0.05, 0.08, 0.1, 0.12, 0.15].sample
   investment_amount_cents =
     (credit_operation.funded_amount_cents * funded_share).to_i.clamp(10_000, credit_operation.funded_amount_cents)
 
   investment_attribute_rows << {
     investor_id: investor.id,
-    fund_id: optional_fund_primary_key,
+    fund_id: seed_fund_primary_keys.sample,
     credit_operation_id: credit_operation.id,
     investment_account_id: investment_account.id,
     amount_cents: investment_amount_cents,
@@ -312,4 +363,7 @@ credit_operations_for_investment_seeds.first(60).each do |credit_operation|
 end
 RiskAssessment.insert_all(risk_assessment_attribute_rows)
 
-puts "Investments domain seeds done (#{Investor.count} investors, #{Fund.count} funds, #{InvestmentAccount.count} accounts, #{Investment.count} investments)."
+investments_with_fund = Investment.where.not(fund_id: nil).count
+risks_for_funds = InvestmentRisk.joins(:investment).where.not(investments: { fund_id: nil }).count
+puts "Investments domain seeds done (#{Investor.count} investors, #{Fund.count} funds, #{InvestmentAccount.count} accounts, #{Investment.count} investments). " \
+     "GET /api/v1/funds/dashboard → investments com fundo: #{investments_with_fund}, investment_risks (com fundo): #{risks_for_funds}."

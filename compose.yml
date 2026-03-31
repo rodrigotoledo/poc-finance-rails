@@ -1,6 +1,6 @@
 # Serviços Rails (app + guard). Postgres e Redis estão em ../compose.infra.yml na raiz do monorepo.
 # Arranque típico (a partir da raiz poc-financer; Rails primeiro para .env):
-#   docker compose -f credito-poc/compose.yml -f compose.infra.yml up --build
+#   docker compose -f poc-finance/compose.yml -f compose.infra.yml up --build
 #
 networks:
   backend:
