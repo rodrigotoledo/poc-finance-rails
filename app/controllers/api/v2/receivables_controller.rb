@@ -48,7 +48,16 @@ module Api
       end
 
       def receivable_params
-        params.require(:receivable).permit(:originator_id, :reference_number, :amount_cents, :due_on, :status)
+        params.require(:receivable).permit(
+          :originator_id,
+          :reference_number,
+          :amount_cents,
+          :due_on,
+          :status,
+          :collateral_value_cents,
+          :discount_rate,
+          :risk_weight
+        )
       end
     end
   end

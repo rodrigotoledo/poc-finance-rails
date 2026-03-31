@@ -8,12 +8,16 @@ module Api
       def index
         scope = Originator.kept.order(:created_at)
         if params[:q].present?
-          # Accept masked inputs (e.g. "12.345.678/0001-90") by comparing digits-only too.
-          scope = scope.where(
-            "legal_name ILIKE :q OR tax_id ILIKE :q OR regexp_replace(tax_id, '\\D', '', 'g') ILIKE :qd",
-            q: q_like,
-            qd: q_digits_like
-          )
+          # Use Ransack for flexible search with OR conditions
+          q_params = {
+            m: "or",
+            legal_name_cont: params[:q],
+            tax_id_cont: params[:q]
+          }
+          if q_digits.present?
+            q_params[:tax_id_cont] = q_digits  # Also search digits
+          end
+          scope = scope.ransack(q_params).result
         end
         pagy, records = paginate_collection(scope)
         render json: { data: records, meta: pagination_meta(pagy) }

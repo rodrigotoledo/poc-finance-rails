@@ -23,6 +23,19 @@ Para **visão de produto**, **arquitetura alvo** (Next.js, NestJS, fronteiras de
 
 - Docker Desktop >= 4.x
 
+## Regra: só Docker (sem bundle/rails/npm no host)
+
+**Não instale nem execute** Ruby gems, Rails, Rake, migrations ou Postgres “à mão” no macOS/Linux. Use **sempre** o serviço `app` (e `compose.infra.yml` para Postgres/Redis), por exemplo:
+
+| No host (evitar) | Com Docker (usar) |
+|------------------|-------------------|
+| `bundle install` | `docker compose run --rm app bundle install` |
+| `rails db:migrate` | `docker compose run --rm app rails db:migrate` |
+| `rails db:seed` | `docker compose run --rm app rails db:seed` |
+| `rails c` | `docker compose run --rm app rails c` |
+
+Na primeira subida, o script de arranque em contentor já aplica migrations quando adequado; para comandos ad hoc, mantenha `COMPOSE_FILE=compose.yml:../compose.infra.yml` (ver abaixo).
+
 ## Setup inicial
 
 Postgres e Redis estão no [compose.infra.yml](../compose.infra.yml) na **raiz** do monorepo; este diretório tem só os serviços Rails (`app`, `guard`) em `compose.yml`. O Compose faz **merge** dos dois ficheiros (mesmo projeto `poc-financer`).
@@ -70,7 +83,7 @@ O script de permissões faz `chown`, `chmod u+rwX`, no macOS também `chflags no
 
 Na primeira execução o `bin/docker-dev-start-web.sh` roda as migrations automaticamente.
 
-**Gems e comandos Rails:** use sempre o container `app` (ex.: `docker compose run --rm app bundle install` se alterar o `Gemfile`). Evite `bundle`/`rails` direto no host salvo ambiente local explícito.
+**Gems e comandos Rails:** use **apenas** o container `app` (ex.: `docker compose run --rm app bundle install` após alterar o `Gemfile`). **Não** use `bundle`/`rails`/`rake` no host — não faz parte do fluxo suportado deste repositório.
 
 Acesse em: http://localhost:3000
 
@@ -243,6 +256,7 @@ docker compose logs -f app         # logs da aplicação
 
 docker compose run --rm app rails c          # Rails console
 docker compose run --rm app rails db:migrate # migrations
+docker compose run --rm app rails db:seed    # seeds
 docker compose run --rm app bundle install   # após mudar Gemfile
 docker compose run --rm app bash             # shell no container
 docker compose run --rm app bin/docker-test  # Minitest + SimpleCov (resumo no terminal + HTML em coverage/)

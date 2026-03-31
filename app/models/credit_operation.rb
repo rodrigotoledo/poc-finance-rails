@@ -11,6 +11,13 @@ class CreditOperation < ApplicationRecord
   belongs_to :receivable
   belongs_to :originator
   has_many :regulatory_gaps, class_name: "Compliance::RegulatoryGap", dependent: :nullify
+  has_many :investments, dependent: :restrict_with_error
+  has_many :investment_risks, dependent: :destroy
+  has_many :financial_assets, dependent: :destroy
+  has_many :risk_assessments, dependent: :destroy
+
+  monetize :total_invested_cents, numericality: { greater_than_or_equal_to: 0 }
+  monetize :available_for_investment_cents, allow_nil: true
 
   validates :rate, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :status, inclusion: { in: STATUSES }
@@ -18,6 +25,16 @@ class CreditOperation < ApplicationRecord
 
   def event_meta
     { status: status, funded_amount_cents: funded_amount_cents, rate: rate.to_s }
+  end
+
+  def funding_gap
+    funded_amount_cents - total_invested_cents
+  end
+
+  def utilization_rate
+    return 0 if funded_amount_cents.zero?
+
+    (total_invested_cents.to_f / funded_amount_cents) * 100
   end
 
   private

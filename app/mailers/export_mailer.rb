@@ -10,14 +10,18 @@ class ExportMailer < ApplicationMailer
 
     attachments[export.filename.presence || "export.csv"] = File.binread(export.file_path)
 
-    subject = "Exportação pronta (#{export.entity} · #{export.range})"
-    body = +"Sua exportação está pronta.\n\n"
-    body << "Entidade: #{export.entity}\n"
-    body << "Período: #{export.range}\n"
-    body << "Linhas: #{export.row_count}\n"
-    body << "Gerado em: #{export.completed_at&.iso8601}\n"
+    subject = "Exportação Concluída: #{export.entity.titleize} (#{export.range})"
+    body = +"Olá,\n\n"
+    body << "Sua exportação foi processada com sucesso e está anexa a este e-mail.\n\n"
+    body << "Detalhes da exportação:\n"
+    body << "- Entidade: #{export.entity.titleize}\n"
+    body << "- Período: #{export.range}\n"
+    body << "- Número de registros: #{export.row_count}\n"
+    body << "- Data de conclusão: #{export.completed_at&.strftime('%d/%m/%Y às %H:%M')}\n\n"
+    body << "Se você tiver alguma dúvida ou precisar de ajustes, entre em contato conosco.\n\n"
+    body << "Atenciosamente,\n"
+    body << "Equipe Crédito POC\n"
 
     mail(to:, subject:, body:)
   end
 end
-

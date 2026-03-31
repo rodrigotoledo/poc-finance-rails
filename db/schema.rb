@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_30_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_31_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -19,13 +19,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000000) do
   enable_extension "uuid-ossp"
 
   create_table "credit_operations", force: :cascade do |t|
+    t.bigint "available_for_investment_cents"
     t.datetime "created_at", null: false
     t.datetime "discarded_at"
+    t.decimal "expected_return_rate", precision: 7, scale: 4
     t.bigint "funded_amount_cents", null: false
+    t.date "investment_end_date"
+    t.date "investment_start_date"
     t.bigint "originator_id", null: false
     t.decimal "rate", precision: 7, scale: 4, null: false
     t.bigint "receivable_id", null: false
+    t.string "risk_rating"
     t.string "status", default: "draft", null: false
+    t.bigint "total_invested_cents", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["discarded_at"], name: "index_credit_operations_on_discarded_at"
     t.index ["originator_id"], name: "index_credit_operations_on_originator_id"
@@ -51,6 +57,42 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000000) do
     t.index ["status"], name: "index_exports_on_status"
   end
 
+  create_table "financial_assets", force: :cascade do |t|
+    t.string "asset_type", null: false
+    t.bigint "book_value_cents"
+    t.datetime "created_at", null: false
+    t.bigint "credit_operation_id"
+    t.bigint "liquidation_value_cents"
+    t.bigint "market_value_cents"
+    t.bigint "originator_id"
+    t.bigint "receivable_id"
+    t.string "status", default: "active", null: false
+    t.datetime "updated_at", null: false
+    t.date "valuation_date"
+    t.jsonb "valuation_metadata", default: {}, null: false
+    t.bigint "value_cents", null: false
+    t.index ["asset_type"], name: "index_financial_assets_on_asset_type"
+    t.index ["credit_operation_id"], name: "index_financial_assets_on_credit_operation_id"
+    t.index ["originator_id"], name: "index_financial_assets_on_originator_id"
+    t.index ["receivable_id"], name: "index_financial_assets_on_receivable_id"
+    t.index ["status"], name: "index_financial_assets_on_status"
+  end
+
+  create_table "funds", force: :cascade do |t|
+    t.bigint "allocated_amount_cents", default: 0, null: false
+    t.bigint "available_amount_cents"
+    t.datetime "created_at", null: false
+    t.string "fund_type"
+    t.date "inception_date"
+    t.date "maturity_date"
+    t.string "name", null: false
+    t.string "status", default: "active", null: false
+    t.decimal "target_return_rate", precision: 7, scale: 4
+    t.bigint "total_commitment_cents"
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_funds_on_status"
+  end
+
   create_table "import_batches", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "failed_rows", default: 0, null: false
@@ -67,6 +109,69 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000000) do
     t.index ["status"], name: "index_import_batches_on_status"
   end
 
+  create_table "investment_accounts", force: :cascade do |t|
+    t.string "account_number", null: false
+    t.bigint "available_balance_cents", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.bigint "invested_balance_cents", default: 0, null: false
+    t.bigint "investor_id", null: false
+    t.bigint "originator_id"
+    t.string "status", default: "active", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_number"], name: "index_investment_accounts_on_account_number", unique: true
+    t.index ["investor_id"], name: "index_investment_accounts_on_investor_id"
+    t.index ["originator_id"], name: "index_investment_accounts_on_originator_id"
+  end
+
+  create_table "investment_risks", force: :cascade do |t|
+    t.date "assessment_date", null: false
+    t.datetime "created_at", null: false
+    t.bigint "credit_operation_id"
+    t.bigint "impact_cents"
+    t.bigint "investment_id"
+    t.text "mitigation_actions"
+    t.string "mitigation_status", default: "pending", null: false
+    t.decimal "probability", precision: 5, scale: 2
+    t.jsonb "risk_metrics", default: {}, null: false
+    t.decimal "risk_score", precision: 5, scale: 2
+    t.string "risk_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["credit_operation_id"], name: "index_investment_risks_on_credit_operation_id"
+    t.index ["investment_id"], name: "index_investment_risks_on_investment_id"
+  end
+
+  create_table "investments", force: :cascade do |t|
+    t.bigint "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.bigint "credit_operation_id", null: false
+    t.datetime "discarded_at"
+    t.bigint "fund_id"
+    t.decimal "interest_rate", precision: 7, scale: 4
+    t.bigint "investment_account_id", null: false
+    t.date "investment_date", null: false
+    t.bigint "investor_id", null: false
+    t.date "maturity_date"
+    t.string "status", default: "active", null: false
+    t.datetime "updated_at", null: false
+    t.index ["credit_operation_id"], name: "index_investments_on_credit_operation_id"
+    t.index ["discarded_at"], name: "index_investments_on_discarded_at"
+    t.index ["fund_id"], name: "index_investments_on_fund_id"
+    t.index ["investment_account_id"], name: "index_investments_on_investment_account_id"
+    t.index ["investor_id"], name: "index_investments_on_investor_id"
+    t.index ["status"], name: "index_investments_on_status"
+  end
+
+  create_table "investors", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "discarded_at"
+    t.string "investor_type"
+    t.string "legal_name", null: false
+    t.string "tax_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["discarded_at"], name: "index_investors_on_discarded_at"
+    t.index ["tax_id"], name: "index_investors_on_tax_id_active", unique: true, where: "(discarded_at IS NULL)"
+  end
+
   create_table "originators", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "discarded_at"
@@ -79,11 +184,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000000) do
 
   create_table "receivables", force: :cascade do |t|
     t.bigint "amount_cents", null: false
+    t.bigint "collateral_value_cents"
     t.datetime "created_at", null: false
     t.datetime "discarded_at"
+    t.decimal "discount_rate", precision: 7, scale: 4
     t.date "due_on", null: false
     t.bigint "originator_id", null: false
     t.string "reference_number", null: false
+    t.decimal "risk_weight", precision: 5, scale: 2
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
     t.index ["discarded_at"], name: "index_receivables_on_discarded_at"
@@ -103,6 +211,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000000) do
     t.datetime "updated_at", null: false
     t.index ["credit_operation_id"], name: "index_regulatory_gaps_on_credit_operation_id"
     t.index ["discarded_at"], name: "index_regulatory_gaps_on_discarded_at"
+  end
+
+  create_table "risk_assessments", force: :cascade do |t|
+    t.date "assessment_date", null: false
+    t.jsonb "assessment_details", default: {}, null: false
+    t.string "assessment_type"
+    t.datetime "created_at", null: false
+    t.bigint "credit_operation_id"
+    t.date "expiry_date"
+    t.bigint "originator_id"
+    t.string "rating"
+    t.decimal "score", precision: 5, scale: 2
+    t.string "status", default: "valid", null: false
+    t.datetime "updated_at", null: false
+    t.index ["credit_operation_id"], name: "index_risk_assessments_on_credit_operation_id"
+    t.index ["originator_id"], name: "index_risk_assessments_on_originator_id"
+    t.index ["status"], name: "index_risk_assessments_on_status"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -228,9 +353,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_30_000000) do
 
   add_foreign_key "credit_operations", "originators"
   add_foreign_key "credit_operations", "receivables"
+  add_foreign_key "financial_assets", "credit_operations"
+  add_foreign_key "financial_assets", "originators"
+  add_foreign_key "financial_assets", "receivables"
   add_foreign_key "import_batches", "originators"
+  add_foreign_key "investment_accounts", "investors"
+  add_foreign_key "investment_accounts", "originators"
+  add_foreign_key "investment_risks", "credit_operations"
+  add_foreign_key "investment_risks", "investments"
+  add_foreign_key "investments", "credit_operations"
+  add_foreign_key "investments", "funds"
+  add_foreign_key "investments", "investment_accounts"
+  add_foreign_key "investments", "investors"
   add_foreign_key "receivables", "originators"
   add_foreign_key "regulatory_gaps", "credit_operations"
+  add_foreign_key "risk_assessments", "credit_operations"
+  add_foreign_key "risk_assessments", "originators"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

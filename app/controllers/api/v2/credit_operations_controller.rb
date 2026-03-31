@@ -62,7 +62,19 @@ module Api
       end
 
       def credit_operation_params
-        params.require(:credit_operation).permit(:receivable_id, :originator_id, :funded_amount_cents, :rate, :status)
+        params.require(:credit_operation).permit(
+          :receivable_id,
+          :originator_id,
+          :funded_amount_cents,
+          :rate,
+          :status,
+          :total_invested_cents,
+          :available_for_investment_cents,
+          :investment_start_date,
+          :investment_end_date,
+          :risk_rating,
+          :expected_return_rate
+        )
       end
     end
   end

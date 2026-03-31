@@ -1,9 +1,6 @@
 Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Solid Queue web dashboard — http://localhost:3000/jobs
-  mount MissionControl::Jobs::Engine, at: "/jobs"
-
   # Letter Opener Web — http://localhost:3000/letter_opener
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
@@ -29,6 +26,18 @@ Rails.application.routes.draw do
       resources :credit_operations
       resources :regulatory_gaps
       resources :imports, only: %i[index show create]
+
+      resources :investors
+      resources :funds do
+        collection do
+          get :dashboard
+        end
+      end
+      resources :investment_accounts
+      resources :investments
+      resources :financial_assets
+      resources :investment_risks
+      resources :risk_assessments
     end
 
     namespace :v2 do

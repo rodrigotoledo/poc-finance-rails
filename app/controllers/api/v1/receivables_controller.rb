@@ -10,11 +10,17 @@ module Api
         scope = scope.where(originator_id: params[:originator_id]) if params[:originator_id].present?
         scope = scope.where(status: params[:status]) if params[:status].present?
         if params[:q].present?
-          scope = scope.where(
-            "receivables.reference_number ILIKE :q OR originators.legal_name ILIKE :q OR originators.tax_id ILIKE :q OR regexp_replace(originators.tax_id, '\\D', '', 'g') ILIKE :qd",
-            q: q_like,
-            qd: q_digits_like
-          )
+          # Use Ransack for flexible search with OR conditions
+          q_params = {
+            m: "or",
+            reference_number_cont: params[:q],
+            originator_legal_name_cont: params[:q],
+            originator_tax_id_cont: params[:q]
+          }
+          if q_digits.present?
+            q_params[:originator_tax_id_cont] = q_digits  # Also search digits
+          end
+          scope = scope.ransack(q_params).result
         end
         pagy, records = paginate_collection(scope)
         data = records.as_json(include: { originator: { only: %i[id legal_name tax_id] } })
@@ -57,7 +63,16 @@ module Api
       end
 
       def receivable_params
-        params.require(:receivable).permit(:originator_id, :reference_number, :amount_cents, :due_on, :status)
+        params.require(:receivable).permit(
+          :originator_id,
+          :reference_number,
+          :amount_cents,
+          :due_on,
+          :status,
+          :collateral_value_cents,
+          :discount_rate,
+          :risk_weight
+        )
       end
     end
   end

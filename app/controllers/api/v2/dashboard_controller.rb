@@ -10,20 +10,21 @@ module Api
         receivables = Receivable.kept
         credit_ops  = CreditOperation.kept
 
+        # Inteiros e float explícitos: JSON numérico estável para o Next (evita BigDecimal → string).
         render json: {
           originators: {
             total: Originator.kept.count
           },
           receivables: {
-            total:             receivables.count,
-            total_amount_cents: receivables.sum(:amount_cents),
-            by_status:         receivables.group(:status).count
+            total:              receivables.count,
+            total_amount_cents: receivables.sum(:amount_cents).to_i,
+            by_status:          receivables.group(:status).count.transform_values(&:to_i)
           },
           credit_operations: {
-            total:             credit_ops.count,
-            total_funded_cents: credit_ops.sum(:funded_amount_cents),
-            avg_rate:          credit_ops.average(:rate)&.round(4).to_s,
-            by_status:         credit_ops.group(:status).count
+            total:              credit_ops.count,
+            total_funded_cents: credit_ops.sum(:funded_amount_cents).to_i,
+            avg_rate:           credit_ops.average(:rate)&.to_f&.round(4),
+            by_status:          credit_ops.group(:status).count.transform_values(&:to_i)
           },
           regulatory_gaps: {
             total: Compliance::RegulatoryGap.kept.count,
@@ -35,6 +36,10 @@ module Api
             processing: ImportBatch.where(status: "processing").count,
             completed:  ImportBatch.where(status: "completed").count,
             failed:     ImportBatch.where(status: "failed").count
+          },
+          funds: {
+            total:     Fund.count,
+            by_status: Fund.group(:status).count.transform_values(&:to_i)
           }
         }
       end
