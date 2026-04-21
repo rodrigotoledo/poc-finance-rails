@@ -65,7 +65,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   # Fake data for seeds / tests
-  gem "faker", "~> 3.5"
+  gem "faker", "~> 3.8"
 
   # Code coverage report: COVERAGE=true bin/docker-test (output in coverage/)
   gem "simplecov", "~> 0.22", require: false
