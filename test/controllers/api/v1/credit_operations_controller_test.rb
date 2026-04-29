@@ -37,11 +37,11 @@ module Api
         op = create_credit_operation!(receivable: r, originator: o)
         get "/api/v1/credit_operations", params: { originator_id: o.id }
         assert_response :success
-        assert_equal 1, JSON.parse(response.body).size
+        assert_equal 1, JSON.parse(response.body)["data"].size
 
         get "/api/v1/credit_operations", params: { receivable_id: r.id }
         assert_response :success
-        ids = JSON.parse(response.body).map { |row| row["id"] }
+        ids = JSON.parse(response.body)["data"].map { |row| row["id"] }
         assert_includes ids, op.id
         assert_equal 1, ids.size
       end

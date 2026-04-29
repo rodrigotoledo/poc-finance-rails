@@ -44,7 +44,7 @@ module Api
         file = temp_csv_upload(csv, "upload.csv")
 
         assert_difference("ImportBatch.count", 1) do
-          assert_enqueued_with(job: ProcessImportFileJob) do
+          assert_difference("ProcessImportFileJob.jobs.size", 1) do
             post "/api/v1/imports", params: { file: file, originator_id: @originator.id }
           end
         end
@@ -56,6 +56,7 @@ module Api
         assert_equal "upload.csv", body["filename"]
         assert_equal @originator.id, body["originator_id"]
 
+        ProcessImportFileJob.drain
         drain_enqueued_jobs
 
         batch = ImportBatch.order(:id).last

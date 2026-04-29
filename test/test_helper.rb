@@ -24,6 +24,9 @@ end
 ENV["RAILS_ENV"] ||= "test"
 ENV["PARALLEL_WORKERS"] = "1" if ENV["COVERAGE"] == "true" || ENV["GUARD"] == "1" || ENV["CI"].present?
 
+require "sidekiq/testing"
+Sidekiq::Testing.fake!
+
 require_relative "../config/environment"
 require "rails/test_help"
 require "mocha/minitest"
@@ -39,6 +42,10 @@ module ActiveSupport
     parallelize(
       workers: ENV["PARALLEL_WORKERS"] ? Integer(ENV["PARALLEL_WORKERS"]) : :number_of_processors
     )
+
+    setup do
+      Sidekiq::Worker.clear_all
+    end
 
     # Add more helper methods to be used for all tests here...
   end

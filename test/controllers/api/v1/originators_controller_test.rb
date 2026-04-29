@@ -52,6 +52,29 @@ module Api
         assert_equal tid, body["tax_id"]
       end
 
+      test "POST create is idempotent with Idempotency-Key" do
+        tid = unique_tax_id
+        key = SecureRandom.uuid
+
+        assert_difference("Originator.count", 1) do
+          post "/api/v1/originators",
+               params: { originator: { legal_name: "Idempotent", tax_id: tid } },
+               headers: { "Idempotency-Key" => key },
+               as: :json
+        end
+        assert_response :created
+        first_id = JSON.parse(response.body)["id"]
+
+        assert_no_difference("Originator.count") do
+          post "/api/v1/originators",
+               params: { originator: { legal_name: "Idempotent", tax_id: tid } },
+               headers: { "Idempotency-Key" => key },
+               as: :json
+        end
+        assert_response :created
+        assert_equal first_id, JSON.parse(response.body)["id"]
+      end
+
       test "GET show returns originator" do
         o = create_originator!
         get "/api/v1/originators/#{o.id}"

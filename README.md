@@ -2,7 +2,7 @@
 
 Este README cobre **setup local**, **Docker**, **API REST**, importações e **comandos** do serviço em `credito-poc/`.
 
-Para **visão de produto**, **arquitetura alvo** (Next.js, NestJS, fronteiras de domínio, regulatório) e **roadmap**, use o README da raiz: **[../README.md](../README.md)**.
+Para **visão de produto**, **arquitetura alvo** (Next.js + mobile → Rails) e **roadmap**, use o README da raiz: **[../README.md](../README.md)**.
 
 ---
 
@@ -10,10 +10,8 @@ Para **visão de produto**, **arquitetura alvo** (Next.js, NestJS, fronteiras de
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Frontend | Next.js 14 + Tailwind |
-| API Gateway | NestJS + JWT/OAuth2 |
+| Frontend | Next.js 15 + Tailwind |
 | Domínio de Recebíveis | **Rails 8 API** ← você está aqui |
-| Compliance BACEN | NestJS |
 | Banco principal | PostgreSQL 16 (RDS Multi-AZ em prod) |
 | Cache | Redis 7 (ElastiCache em prod) |
 | Background Jobs | Solid Queue (Postgres-backed) |
@@ -70,7 +68,7 @@ id -g   # ex.: 20
 # Edite .env: USER_ID=501 e GROUP_ID=20 (seus valores)
 ```
 
-**Stack completo (Rails + Nest + infra)** na raiz: `docker compose up --build` (ver [compose.yml](../compose.yml) no repositório).
+**Stack completo (Rails + Next + infra)** na raiz: `docker compose up --build` (ver [compose.yml](../compose.yml) no repositório).
 
 **Se ainda não conseguir editar** (ex.: `app/jobs/application_job.rb` não salva no Cursor), na raiz do projeto:
 
@@ -316,7 +314,7 @@ Copie `.env.example` para `.env`. Os valores já vêm preenchidos com defaults p
 | DB | Uso |
 |----|-----|
 | 0 | Cache / jobs / Solid Queue (Rails) |
-| 1 | Reservado ao Nest em Docker ([credito-poc-nestjs/.env.example](../credito-poc-nestjs/.env.example)) |
+| 1 | Reservado (futuro) |
 
 ## Gems (domínio + dev)
 
@@ -371,5 +369,4 @@ app/
 - [ ] Serviço de cálculo de antecipação
 - [ ] Compliance: mapeamento de gaps BACEN
 - [ ] Dashboard Next.js
-- [ ] API Gateway NestJS
 - [ ] Integração EventBridge (mock local)

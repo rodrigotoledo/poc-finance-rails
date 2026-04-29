@@ -17,3 +17,11 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- CREATE EXTENSION IF NOT EXISTS pg_partman;  -- Uncomment if using partitioning
 
 -- Add any additional initial SQL commands here
+
+-- Ensure Rails databases exist (dev + test).
+-- (The Postgres image creates POSTGRES_DB only; we create the remaining ones explicitly.)
+SELECT 'CREATE DATABASE credito_poc_development'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'credito_poc_development')\gexec
+
+SELECT 'CREATE DATABASE credito_poc_test'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'credito_poc_test')\gexec
