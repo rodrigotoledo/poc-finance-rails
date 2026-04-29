@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class RiskAssessment < ApplicationRecord
+  include HasIdempotencyKey
+
   STATUSES = %w[valid expired superseded].freeze
   ASSESSMENT_TYPES = %w[credit_risk operational_risk concentration other].freeze
 
@@ -11,6 +13,8 @@ class RiskAssessment < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :assessment_type, inclusion: { in: ASSESSMENT_TYPES }, allow_blank: true
   validate :credit_operation_or_originator_present
+
+  has_idempotency_key
 
   private
 

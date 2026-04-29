@@ -2,6 +2,7 @@
 
 class Investor < ApplicationRecord
   include Discard::Model
+  include HasIdempotencyKey
   include Publishable
 
   INVESTOR_TYPES = %w[institutional retail fund_of_funds other].freeze
@@ -13,6 +14,8 @@ class Investor < ApplicationRecord
   validates :tax_id, presence: true,
                      uniqueness: { conditions: -> { where(discarded_at: nil) } }
   validates :investor_type, inclusion: { in: INVESTOR_TYPES }, allow_blank: true
+
+  has_idempotency_key
 
   def event_meta
     { legal_name: legal_name, tax_id: tax_id }

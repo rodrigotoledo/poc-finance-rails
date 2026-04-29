@@ -2,6 +2,7 @@
 
 class Receivable < ApplicationRecord
   include Discard::Model
+  include HasIdempotencyKey
   include Publishable
 
   STATUSES = %w[pending eligible advanced cancelled].freeze
@@ -32,4 +33,6 @@ class Receivable < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :discount_rate, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :risk_weight, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+
+  has_idempotency_key
 end

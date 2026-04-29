@@ -2,6 +2,7 @@
 
 class CreditOperation < ApplicationRecord
   include Discard::Model
+  include HasIdempotencyKey
   include Publishable
 
   STATUSES = %w[draft approved settled cancelled].freeze
@@ -36,6 +37,8 @@ class CreditOperation < ApplicationRecord
 
     (total_invested_cents.to_f / funded_amount_cents) * 100
   end
+
+  has_idempotency_key
 
   private
 

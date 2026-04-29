@@ -1,6 +1,7 @@
 require_relative "boot"
 
 require "rails/all"
+require_relative "../app/middleware/idempotency_middleware"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -32,6 +33,9 @@ module CreditoPoc
     # Enable sessions for Sidekiq::Web CSRF protection
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
+
+    # Request idempotency for POST with Idempotency-Key (persisted in Postgres).
+    config.middleware.use IdempotencyMiddleware
 
     config.i18n.available_locales = %i[en pt-BR]
     config.i18n.default_locale = :en

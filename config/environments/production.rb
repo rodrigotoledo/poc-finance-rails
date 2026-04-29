@@ -43,8 +43,8 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Replace the default in-process memory cache store with a durable alternative.
-  # config.cache_store = :mem_cache_store
+  # Use Redis for Rails cache.
+  config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0") }
 
   # ActiveJob em background via Sidekiq (scheduler roda no processo do Sidekiq).
   config.active_job.queue_adapter = :sidekiq

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class InvestmentAccount < ApplicationRecord
+  include HasIdempotencyKey
+
   STATUSES = %w[active suspended closed].freeze
 
   belongs_to :investor
@@ -12,4 +14,6 @@ class InvestmentAccount < ApplicationRecord
 
   validates :account_number, presence: true, uniqueness: true
   validates :status, inclusion: { in: STATUSES }
+
+  has_idempotency_key
 end
