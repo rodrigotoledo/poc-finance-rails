@@ -10,7 +10,7 @@ gem "sidekiq-scheduler", "~> 5.0"
 # Queue-level uniqueness for critical Sidekiq jobs
 gem "sidekiq-unique-jobs", "~> 8.0"
 # Sidekiq 7.3 + Ruby 4: pin while ConnectionPool 3 incompatibility
-gem "connection_pool", "< 3.0"
+gem "connection_pool", "< 4.0"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
