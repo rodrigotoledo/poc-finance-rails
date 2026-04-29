@@ -11,7 +11,7 @@ module Api
           deliver_to_email: params[:deliver_to_email].presence || ENV["EXPORT_DELIVER_TO_EMAIL"]
         )
 
-        GenerateExportJob.perform_later(export.id)
+        GenerateExportJob.perform_async(export.id)
 
         RedisPublisher.publish(
           entity: "exports",

@@ -1,7 +1,14 @@
 # frozen_string_literal: true
 
-class DashboardTickJob < ApplicationJob
-  queue_as :default
+class DashboardTickJob
+  include Sidekiq::Worker
+
+  sidekiq_options(
+    queue: :default,
+    lock: :until_executed,
+    lock_ttl: 10,
+    on_conflict: :log
+  )
 
   def perform
     return unless enabled?

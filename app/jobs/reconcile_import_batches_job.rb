@@ -3,8 +3,15 @@
 # Keeps ImportBatch statuses consistent with reality.
 # - If a batch is pending and the file exists, enqueue processing.
 # - If a batch is pending/processing but the file is missing, mark as failed.
-class ReconcileImportBatchesJob < ApplicationJob
-  queue_as :default
+class ReconcileImportBatchesJob
+  include Sidekiq::Worker
+
+  sidekiq_options(
+    queue: :default,
+    lock: :until_executed,
+    lock_ttl: 60,
+    on_conflict: :log
+  )
 
   LIMIT = 200
 
@@ -47,7 +54,12 @@ class ReconcileImportBatchesJob < ApplicationJob
       .each do |batch|
         next unless batch.file_path.present? && File.exist?(batch.file_path)
 
-        ProcessImportFileJob.perform_later(batch.id)
+        batch.with_lock do
+          # Avoid duplicate enqueues if multiple reconcile ticks overlap.
+          next unless batch.status == "pending"
+
+          ProcessImportFileJob.perform_async(batch.id)
+        end
       rescue => e
         Rails.logger.warn("[ReconcileImportBatchesJob] enqueue batch=#{batch.id} #{e.class}: #{e.message}")
       end

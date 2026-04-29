@@ -34,7 +34,7 @@ module Api
           file_type:     file_type
         )
 
-        ProcessImportFileJob.perform_later(import_batch.id)
+        ProcessImportFileJob.perform_async(import_batch.id)
 
         render json: serialize(import_batch), status: :created
       end
