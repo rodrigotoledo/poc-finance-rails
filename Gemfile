@@ -7,6 +7,8 @@ gem "redis", "~> 5.0"
 # Background jobs (ActiveJob adapter) + scheduler (5s ticks for POC dashboard)
 gem "sidekiq", "~> 7.3"
 gem "sidekiq-scheduler", "~> 5.0"
+# Queue-level uniqueness for critical Sidekiq jobs
+gem "sidekiq-unique-jobs", "~> 8.0"
 # Sidekiq 7.3 + Ruby 4: pin while ConnectionPool 3 incompatibility
 gem "connection_pool", "< 3.0"
 # Use the Puma web server [https://github.com/puma/puma]
@@ -19,10 +21,6 @@ gem "puma", ">= 5.0"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
-
-# Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
-gem "solid_cache"
-gem "solid_queue"
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false

@@ -20,11 +20,17 @@ module Api
 
       def create
         account = InvestmentAccount.new(account_params)
+        apply_idempotency_key(account)
         if account.save
           render json: account, status: :created
         else
           render json: { errors: account.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = InvestmentAccount.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

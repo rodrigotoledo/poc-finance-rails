@@ -1,11 +1,23 @@
 # frozen_string_literal: true
 
-class GenerateExportJob < ApplicationJob
-  queue_as :exports
+class GenerateExportJob
+  include Sidekiq::Worker
+
+  sidekiq_options(
+    queue: :exports,
+    lock: :until_executed,
+    lock_ttl: 30 * 60,
+    on_conflict: :log
+  )
 
   def perform(export_id)
     export = Export.find(export_id)
-    export.mark_processing!
+    export.with_lock do
+      # Idempotency/race safety: only transition pending -> processing once.
+      return unless export.status == "pending"
+
+      export.mark_processing!
+    end
 
     exporter = Exporters.for_entity(export.entity)
     range = Exporters.time_range_for(export.range)

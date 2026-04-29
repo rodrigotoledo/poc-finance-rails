@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Fund < ApplicationRecord
+  include HasIdempotencyKey
   include Publishable
 
   STATUSES = %w[active closed winding_up].freeze
@@ -16,6 +17,8 @@ class Fund < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :fund_type, inclusion: { in: FUND_TYPES }, allow_blank: true
   validates :target_return_rate, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+
+  has_idempotency_key
 
   def event_meta
     {

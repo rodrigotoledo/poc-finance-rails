@@ -2,6 +2,7 @@
 
 class Investment < ApplicationRecord
   include Discard::Model
+  include HasIdempotencyKey
   include Publishable
 
   STATUSES = %w[active matured defaulted liquidated cancelled].freeze
@@ -19,6 +20,8 @@ class Investment < ApplicationRecord
   validates :interest_rate, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   validate :investor_matches_account
+
+  has_idempotency_key
 
   def event_meta
     {

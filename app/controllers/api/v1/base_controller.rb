@@ -5,6 +5,7 @@ module Api
     class BaseController < ApplicationController
       include LocaleFromRequest
       include Api::V1::PaginatedJson
+      include Api::IdempotencyFromHeaders
 
       private
 

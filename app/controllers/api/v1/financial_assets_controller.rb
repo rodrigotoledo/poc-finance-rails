@@ -22,11 +22,17 @@ module Api
 
       def create
         asset = FinancialAsset.new(asset_params)
+        apply_idempotency_key(asset)
         if asset.save
           render json: asset, status: :created
         else
           render json: { errors: asset.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = FinancialAsset.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

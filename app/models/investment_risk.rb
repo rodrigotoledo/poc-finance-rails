@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class InvestmentRisk < ApplicationRecord
+  include HasIdempotencyKey
   include Publishable
 
   RISK_TYPES = %w[credit market liquidity operational legal other].freeze
@@ -15,6 +16,8 @@ class InvestmentRisk < ApplicationRecord
   validates :assessment_date, presence: true
   validates :mitigation_status, inclusion: { in: MITIGATION_STATUSES }
   validate :investment_or_credit_operation_present
+
+  has_idempotency_key
 
   def event_meta
     {

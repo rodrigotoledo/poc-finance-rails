@@ -23,11 +23,17 @@ module Api
 
       def create
         gap = Compliance::RegulatoryGap.new(regulatory_gap_params)
+        apply_idempotency_key(gap)
         if gap.save
           render json: gap, status: :created
         else
           render json: { errors: gap.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = Compliance::RegulatoryGap.kept.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

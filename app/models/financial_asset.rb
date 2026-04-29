@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class FinancialAsset < ApplicationRecord
+  include HasIdempotencyKey
+
   STATUSES = %w[active impaired liquidated written_off].freeze
   ASSET_TYPES = %w[receivable cash collateral other].freeze
 
@@ -15,4 +17,6 @@ class FinancialAsset < ApplicationRecord
 
   validates :asset_type, presence: true, inclusion: { in: ASSET_TYPES }
   validates :status, inclusion: { in: STATUSES }
+
+  has_idempotency_key
 end

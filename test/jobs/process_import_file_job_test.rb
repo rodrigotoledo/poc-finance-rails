@@ -29,7 +29,7 @@ class ProcessImportFileJobTest < ActiveJob::TestCase
     )
 
     assert_enqueued_jobs 1, only: ImportChunkJob do
-      ProcessImportFileJob.perform_now(batch.id)
+      ProcessImportFileJob.new.perform(batch.id)
     end
 
     batch.reload
@@ -60,7 +60,7 @@ class ProcessImportFileJobTest < ActiveJob::TestCase
       originator: @originator
     )
 
-    ProcessImportFileJob.perform_now(batch.id)
+    ProcessImportFileJob.new.perform(batch.id)
 
     batch.reload
     assert_equal "failed", batch.status
@@ -91,7 +91,7 @@ class ProcessImportFileJobTest < ActiveJob::TestCase
     )
 
     assert_enqueued_jobs 1, only: ImportChunkJob do
-      ProcessImportFileJob.perform_now(batch.id)
+      ProcessImportFileJob.new.perform(batch.id)
     end
 
     perform_enqueued_jobs
@@ -122,7 +122,7 @@ class ProcessImportFileJobTest < ActiveJob::TestCase
 
     ProcessImportFileJob.any_instance.stubs(:load_rows).raises(RuntimeError.new("load failed"))
 
-    error = assert_raises(RuntimeError) { ProcessImportFileJob.perform_now(batch.id) }
+    error = assert_raises(RuntimeError) { ProcessImportFileJob.new.perform(batch.id) }
     assert_equal "load failed", error.message
     assert_equal "failed", batch.reload.status
   ensure
@@ -133,7 +133,7 @@ class ProcessImportFileJobTest < ActiveJob::TestCase
     missing_id = (ImportBatch.maximum(:id) || 0) + 10_000
 
     assert_raises(ActiveRecord::RecordNotFound) do
-      ProcessImportFileJob.perform_now(missing_id)
+      ProcessImportFileJob.new.perform(missing_id)
     end
   end
 

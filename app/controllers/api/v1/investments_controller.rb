@@ -22,11 +22,17 @@ module Api
 
       def create
         investment = Investment.new(investment_params)
+        apply_idempotency_key(investment)
         if investment.save
           render json: investment, status: :created
         else
           render json: { errors: investment.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = Investment.kept.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

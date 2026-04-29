@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RedisPublisher
   CHANNEL = "poc:events"
   STREAM  = "poc:events:stream"
@@ -6,7 +8,7 @@ class RedisPublisher
     json = payload.to_json
     redis.publish(CHANNEL, json)
     publish_stream(payload)
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error "[RedisPublisher] #{e.message}"
   end
 
@@ -21,7 +23,7 @@ class RedisPublisher
     }
 
     redis.xadd(STREAM, entry, maxlen: stream_maxlen, approximate: true)
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error "[RedisPublisher:stream] #{e.message}"
   end
 

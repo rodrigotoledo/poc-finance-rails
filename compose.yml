@@ -19,7 +19,9 @@ x-app: &app_defaults
     - .:/app
     - bundle:/usr/local/bundle
   working_dir: /app
-  env_file: .env
+  env_file:
+    - path: .env
+      required: false
   networks:
     - backend
 

@@ -3,14 +3,27 @@ require "roo"
 
 # Reads an uploaded CSV or XLSX file, splits it into chunks of CHUNK_SIZE rows,
 # and enqueues one ImportChunkJob per chunk so they run in parallel.
-class ProcessImportFileJob < ApplicationJob
-  queue_as :imports
+class ProcessImportFileJob
+  include Sidekiq::Worker
+
+  sidekiq_options(
+    queue: :imports,
+    lock: :until_executed,
+    lock_ttl: 30 * 60,
+    on_conflict: :log
+  )
 
   CHUNK_SIZE = 1_000
 
   def perform(import_batch_id)
     batch = ImportBatch.find(import_batch_id)
-    batch.update!(status: "processing")
+    batch.with_lock do
+      # Idempotency/race safety: a batch should only be processed once.
+      # Retries or duplicate enqueues must be a no-op.
+      return unless batch.status == "pending"
+
+      batch.update!(status: "processing")
+    end
 
     rows = load_rows(batch)
 

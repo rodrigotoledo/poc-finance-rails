@@ -1,4 +1,5 @@
 class ImportBatch < ApplicationRecord
+  include HasIdempotencyKey
   include Publishable
 
   STATUSES   = %w[pending processing completed failed].freeze
@@ -12,6 +13,8 @@ class ImportBatch < ApplicationRecord
   validates :file_path, presence: true
   validates :file_type, inclusion: { in: FILE_TYPES }
   validates :status,    inclusion: { in: STATUSES }
+
+  has_idempotency_key
 
   # Atomically appends errors and increments counters for one processed chunk.
   # +chunk_processed+: rows that were saved successfully.
