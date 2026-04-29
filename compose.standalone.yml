@@ -1,0 +1,9 @@
+# Standalone entrypoint for Rails + shared infra (Postgres + Redis).
+#
+# Usage (from this directory):
+#   docker compose -f compose.standalone.yml up --build
+#
+include:
+  - path: ../poc-finance-base/compose.infra.yml
+  - path: ./compose.yml
+

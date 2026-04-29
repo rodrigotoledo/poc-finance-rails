@@ -9,13 +9,13 @@ Para **visão de produto**, **arquitetura alvo** (Next.js + mobile → Rails) e 
 ## Stack (este serviço)
 
 | Camada | Tecnologia |
-|--------|-----------|
+| ------ | ---------- |
 | Frontend | Next.js 15 + Tailwind |
 | Domínio de Recebíveis | **Rails 8 API** ← você está aqui |
 | Banco principal | PostgreSQL 16 (RDS Multi-AZ em prod) |
 | Cache | Redis 7 (ElastiCache em prod) |
-| Background Jobs | Solid Queue (Postgres-backed) |
-| Eventos | EventBridge + SQS FIFO (simulado local via Solid Queue) |
+| Background Jobs | Sidekiq (Redis-backed) |
+| Eventos | Redis pub/sub (SSE no Next) |
 
 ## Pré-requisitos
 
@@ -23,42 +23,42 @@ Para **visão de produto**, **arquitetura alvo** (Next.js + mobile → Rails) e 
 
 ## Regra: só Docker (sem bundle/rails/npm no host)
 
-**Não instale nem execute** Ruby gems, Rails, Rake, migrations ou Postgres “à mão” no macOS/Linux. Use **sempre** o serviço `app` (e `compose.infra.yml` para Postgres/Redis), por exemplo:
+**Não instale nem execute** Ruby gems, Rails, Rake, migrations ou Postgres “à mão” no macOS/Linux. Use **sempre** Docker (e a infra em `poc-finance-base/compose.infra.yml`), por exemplo:
 
 | No host (evitar) | Com Docker (usar) |
-|------------------|-------------------|
+| --------------- | ----------------------------------------- |
 | `bundle install` | `docker compose run --rm app bundle install` |
 | `rails db:migrate` | `docker compose run --rm app rails db:migrate` |
 | `rails db:seed` | `docker compose run --rm app rails db:seed` |
 | `rails c` | `docker compose run --rm app rails c` |
 
-Na primeira subida, o script de arranque em contentor já aplica migrations quando adequado; para comandos ad hoc, mantenha `COMPOSE_FILE=compose.yml:../compose.infra.yml` (ver abaixo).
+Na primeira subida, o script de arranque em contentor já aplica migrations quando adequado.
 
 ## Setup inicial
 
-Postgres e Redis estão no [compose.infra.yml](../compose.infra.yml) na **raiz** do monorepo; este diretório tem só os serviços Rails (`app`, `guard`) em `compose.yml`. O Compose faz **merge** dos dois ficheiros (mesmo projeto `poc-financer`).
+Postgres e Redis estão em `poc-finance-base/compose.infra.yml` na **raiz** do monorepo; este diretório tem só os serviços Rails (`app`, `sidekiq`, `guard`) em `compose.yml`.
 
 **Opção A — a partir da raiz do repositório** (`poc-financer/`), só Rails + infra:
 
 ```bash
 git clone <repo>
-cd poc-financer/credito-poc
+cd poc-financer/poc-finance-rails
 cp .env.example .env
 cd ..
-docker compose -f credito-poc/compose.yml -f compose.infra.yml up --build
+docker compose -f poc-finance-rails/compose.yml -f poc-finance-base/compose.infra.yml up --build
 ```
 
-**Opção B — a partir deste diretório** (`credito-poc/`), para não repetir `-f` em todo o lado:
+**Opção B — a partir deste diretório** (`poc-finance-rails/`), para não repetir `-f` em todo o lado:
 
 ```bash
-cd credito-poc
+cd poc-finance-rails
 cp .env.example .env
-export COMPOSE_FILE=compose.yml:../compose.infra.yml
+docker compose -f compose.standalone.yml up --build
 docker compose build --no-cache app guard   # primeira vez ou após mudar USER_ID/GROUP_ID
 docker compose up --build
 ```
 
-Os exemplos abaixo assumem **`COMPOSE_FILE=compose.yml:../compose.infra.yml`** exportado em `credito-poc/` (ou use os mesmos `-f` explicitamente).
+Os exemplos abaixo assumem que você está usando `compose.standalone.yml` (ou equivalente na raiz com `-f`).
 
 No `.env`, além das chaves Rails, defina **`USER_ID`** e **`GROUP_ID`** com o mesmo usuário do macOS (evita arquivos criados pelo Docker com dono errado e o Cursor não salvar):
 
@@ -83,14 +83,14 @@ Na primeira execução o `bin/docker-dev-start-web.sh` roda as migrations automa
 
 **Gems e comandos Rails:** use **apenas** o container `app` (ex.: `docker compose run --rm app bundle install` após alterar o `Gemfile`). **Não** use `bundle`/`rails`/`rake` no host — não faz parte do fluxo suportado deste repositório.
 
-Acesse em: http://localhost:3000
+Acesse em: `http://localhost:3000`
 
 ### API REST (Rails, v1)
 
 Base: `http://localhost:3000/api/v1`
 
 | Resource | Example |
-|----------|---------|
+| -------- | ------- |
 | Originators | `GET /api/v1/originators` |
 | Receivables | `GET /api/v1/receivables` (filter: `?originator_id=1`) |
 | Credit operations | `GET /api/v1/credit_operations` (`?originator_id=` / `?receivable_id=`) |
@@ -116,14 +116,14 @@ Os exemplos em `lib/samples/*.xlsx` são gerados com **[caxlsx](https://github.c
 
 - O registro do lote na API é o model **`ImportBatch`** (metadados, contadores, erros amostrados).
 - O job **`ProcessImportFileJob`** (fila `imports`) lê o ficheiro (CSV ou XLSX conforme acima), calcula o total de linhas e reparte as linhas em **fatias de 1.000** com **`Enumerable#each_slice`** — **chunking em memória** sobre um array de hashes, **não** é `ActiveRecord::Relation#in_batches` nem `find_in_batches` (esses servem para percorrer **linhas já gravadas no PostgreSQL** em blocos).
-- Cada fatia vira um **`ImportChunkJob`** enfileirado à parte; vários chunks podem correr em paralelo (Solid Queue), e o batch agrega `processed_rows` / `failed_rows` / `row_errors` quando cada chunk termina.
+- Cada fatia vira um **`ImportChunkJob`** enfileirado à parte; vários chunks podem correr em paralelo (Sidekiq), e o batch agrega `processed_rows` / `failed_rows` / `row_errors` quando cada chunk termina.
 
 **Memória:** o conteúdo é **materializado em memória** após a leitura (lista completa de linhas antes do slice). Ficheiros muito grandes aumentam o uso de RAM; evolução natural: **streaming** de CSV e/ou leitura incremental no XLSX, enfileirando chunks sem carregar o ficheiro inteiro de uma vez.
 
 **Colunas esperadas:**
 
 | Coluna | Obrigatório | Exemplo |
-|--------|-------------|---------|
+| ------ | ----------- | ------- |
 | `originator_tax_id` | não* | `12345678000195` |
 | `reference_number` | sim | `RECV-2025-000001` |
 | `amount` | sim | `1500.00` |
@@ -186,7 +186,7 @@ curl http://localhost:3000/api/v1/imports
 **Arquivos de amostra** em `lib/samples/` (5 CSV + 5 XLSX, 10.000 linhas cada, com erros intencionais para exercitar a pipeline):
 
 | Arquivo | Tipo de erro injetado | Taxa |
-|---------|----------------------|------|
+| ------- | --------------------- | ---- |
 | `receivables_batch_1.*` | Status inválido | ~5 % |
 | `receivables_batch_2.*` | Amount ausente / data mal formada | ~10 % |
 | `receivables_batch_3.*` | `reference_number` ausente | ~3 % |
@@ -234,23 +234,24 @@ Uploading 10 files to http://app:3000/api/v1/imports ...
 
 ### Painel de jobs (Mission Control)
 
-Equivalente ao Sidekiq Web, nativo do Rails 8 + Solid Queue.
+O processamento assíncrono roda em Sidekiq (container `sidekiq` no Compose).
 
-Acesse em: **[http://localhost:3000/jobs](http://localhost:3000/jobs)**
+Para depuração local, use logs:
 
-Login: usuário e senha definidos em `.env` (`JOBS_DASHBOARD_USER` / `JOBS_DASHBOARD_PASSWORD`; default `admin`/`admin` em dev).
-
-O painel mostra filas, workers ativos, jobs em execução, falhos e tarefas recorrentes. Jobs de import (`imports` queue) aparecem em tempo real enquanto os batches são processados.
+```bash
+docker compose logs -f sidekiq
+```
 
 ## Comandos do dia-a-dia
 
-Na pasta `credito-poc/`, exporte `COMPOSE_FILE=compose.yml:../compose.infra.yml` (como no setup) para que estes comandos incluam Postgres e Redis.
+Na pasta `poc-finance-rails/`, use `compose.standalone.yml` para incluir Postgres e Redis.
 
 ```bash
 docker compose up --build          # sobe tudo (build + start)
 docker compose up                  # sobe sem rebuild
 docker compose down                # derruba os containers
 docker compose logs -f app         # logs da aplicação
+docker compose logs -f sidekiq     # logs do Sidekiq
 
 docker compose run --rm app rails c          # Rails console
 docker compose run --rm app rails db:migrate # migrations
@@ -301,7 +302,7 @@ docker compose up --build
 Copie `.env.example` para `.env`. Os valores já vêm preenchidos com defaults para dev.
 
 | Variável | Descrição |
-|----------|-----------|
+| -------- | --------- |
 | `RAILS_MASTER_KEY` | Chave de descriptografia das credentials |
 | `SECRET_KEY_BASE` | Chave de sessão/tokens |
 | `DATABASE_URL` | URL de conexão PostgreSQL |
@@ -312,14 +313,14 @@ Copie `.env.example` para `.env`. Os valores já vêm preenchidos com defaults p
 ## Configuração Redis
 
 | DB | Uso |
-|----|-----|
-| 0 | Cache / jobs / Solid Queue (Rails) |
+| -- | --- |
+| 0 | Cache / jobs / Sidekiq (Rails) |
 | 1 | Reservado (futuro) |
 
 ## Gems (domínio + dev)
 
 | Gem | Uso |
-|-----|-----|
+| --- | --- |
 | [discard](https://github.com/jhawthorn/discard) | Soft delete (`discarded_at`); `DELETE` na API chama `discard`, não remove a linha. Índices únicos parciais (`WHERE discarded_at IS NULL`) em `tax_id` e `(originator_id, reference_number)`. |
 | [money-rails](https://github.com/RubyMoney/money-rails) | Valores monetários em `*_cents` com `Money` (`monetize`); moeda padrão **BRL** em `config/initializers/money.rb`. |
 | [faker](https://github.com/faker-ruby/faker) | Dados fictícios em seeds / testes. |
@@ -331,13 +332,13 @@ Copie `.env.example` para `.env`. Os valores já vêm preenchidos com defaults p
 | [roo](https://github.com/roo-rb/roo) | Leitura de **XLSX** na importação via `Roo::Excelx`. |
 | [caxlsx](https://github.com/caxlsx/caxlsx) | Geração dos XLSX de exemplo em `lib/samples/` (`rake samples:generate`). |
 
-Após alterar o `Gemfile`: `docker compose run --rm app bundle install` (com o mesmo `COMPOSE_FILE` que no setup).
+Após alterar o `Gemfile`: `docker compose run --rm app bundle install`.
 
 Não usamos **annotate** / anotação automática de schema nos models: o gem clássico não resolve com ActiveRecord 8.x; manteremos só o que o `db/schema.rb` e o código já documentam.
 
 ## Estrutura de domínio (Rails)
 
-```
+```text
 app/
 ├── models/
 │   ├── originator.rb          # counterparty / originator (receivables market)
