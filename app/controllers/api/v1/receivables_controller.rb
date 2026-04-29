@@ -33,11 +33,17 @@ module Api
 
       def create
         receivable = Receivable.new(receivable_params)
+        apply_idempotency_key(receivable)
         if receivable.save
           render json: receivable, status: :created
         else
           render json: { errors: receivable.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = Receivable.kept.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

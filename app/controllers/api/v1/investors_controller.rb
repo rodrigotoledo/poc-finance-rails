@@ -24,11 +24,17 @@ module Api
 
       def create
         investor = Investor.new(investor_params)
+        apply_idempotency_key(investor)
         if investor.save
           render json: investor, status: :created
         else
           render json: { errors: investor.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = Investor.kept.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

@@ -20,11 +20,17 @@ module Api
 
       def create
         risk = InvestmentRisk.new(risk_params)
+        apply_idempotency_key(risk)
         if risk.save
           render json: risk, status: :created
         else
           render json: { errors: risk.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = InvestmentRisk.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

@@ -29,11 +29,17 @@ module Api
 
       def create
         originator = Originator.new(originator_params)
+        apply_idempotency_key(originator)
         if originator.save
           render json: originator, status: :created
         else
           render json: { errors: originator.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = Originator.kept.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

@@ -21,11 +21,17 @@ module Api
 
       def create
         assessment = RiskAssessment.new(assessment_params)
+        apply_idempotency_key(assessment)
         if assessment.save
           render json: assessment, status: :created
         else
           render json: { errors: assessment.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = RiskAssessment.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

@@ -35,16 +35,23 @@ module Api
         file_type = ext.delete(".")
         file_path = persist_upload(params[:file], file_type)
 
-        import_batch = ImportBatch.create!(
+        import_batch = ImportBatch.new(
           originator_id: params[:originator_id],
           filename:      params[:file].original_filename,
           file_path:     file_path,
           file_type:     file_type
         )
+        apply_idempotency_key(import_batch)
+        import_batch.save!
 
-        ProcessImportFileJob.perform_later(import_batch.id)
+        ProcessImportFileJob.perform_async(import_batch.id)
 
         render json: serialize(import_batch), status: :created
+      rescue ActiveRecord::RecordNotUnique
+        existing = ImportBatch.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: serialize(existing), status: :ok
       end
 
       private

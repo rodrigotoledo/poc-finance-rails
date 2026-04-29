@@ -49,11 +49,17 @@ module Api
 
       def create
         fund = Fund.new(fund_params)
+        apply_idempotency_key(fund)
         if fund.save
           render json: fund, status: :created
         else
           render json: { errors: fund.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = Fund.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update

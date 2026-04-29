@@ -43,11 +43,17 @@ module Api
 
       def create
         operation = CreditOperation.new(credit_operation_params)
+        apply_idempotency_key(operation)
         if operation.save
           render json: operation, status: :created
         else
           render json: { errors: operation.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordNotUnique
+        existing = CreditOperation.kept.find_by(idempotency_key: idempotency_key)
+        raise if existing.blank?
+
+        render json: existing, status: :ok
       end
 
       def update
