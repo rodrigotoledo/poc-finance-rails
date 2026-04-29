@@ -308,6 +308,10 @@ Copie `.env.example` para `.env`. Os valores já vêm preenchidos com defaults p
 | `DATABASE_URL` | URL de conexão PostgreSQL |
 | `REDIS_URL` | URL de conexão Redis |
 
+```bash
+docker compose run --rm -e VISUAL="code --wait" app bin/rails credentials:edit
+```
+
 **Nunca commite `.env`.**
 
 ## Configuração Redis
