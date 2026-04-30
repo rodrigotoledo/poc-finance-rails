@@ -6,7 +6,7 @@ gem "pg", ">= 1.4"
 gem "redis", "~> 5.0"
 # Background jobs (ActiveJob adapter) + scheduler (5s ticks for POC dashboard)
 gem "sidekiq", "~> 7.3"
-gem "sidekiq-scheduler", "~> 5.0"
+gem "sidekiq-scheduler", "~> 6.0"
 # Queue-level uniqueness for critical Sidekiq jobs
 gem "sidekiq-unique-jobs", "~> 8.0"
 # Sidekiq 7.3 + Ruby 4: pin while ConnectionPool 3 incompatibility
