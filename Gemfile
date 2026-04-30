@@ -35,7 +35,7 @@ gem "pagy", "~> 9.0"
 gem "discard", "~> 1.3"
 
 # Money attributes backed by *_cents columns; default currency BRL (see config/initializers/money.rb)
-gem "money-rails", "~> 1.15"
+gem "money-rails", "~> 3.0"
 
 # Locale data for Rails (errors, dates, number formats) — add app strings under config/locales/*.yml
 gem "rails-i18n", "~> 8.1"
