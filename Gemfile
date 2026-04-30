@@ -47,7 +47,7 @@ gem "ransack", "~> 4.2"
 # csv is explicitly required because Ruby 4.0 removed it from default gems
 gem "csv", "~> 3.3"
 gem "roo", "~> 2.10"
-gem "caxlsx", "~> 3.4"
+gem "caxlsx", "~> 4.4"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
