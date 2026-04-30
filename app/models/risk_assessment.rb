@@ -1,5 +1,35 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: risk_assessments
+#
+#  id                  :bigint           not null, primary key
+#  assessment_date     :date             not null
+#  assessment_details  :jsonb            not null
+#  assessment_type     :string
+#  expiry_date         :date
+#  idempotency_key     :string
+#  rating              :string
+#  score               :decimal(5, 2)
+#  status              :string           default("valid"), not null
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  credit_operation_id :bigint
+#  originator_id       :bigint
+#
+# Indexes
+#
+#  index_risk_assessments_on_credit_operation_id  (credit_operation_id)
+#  index_risk_assessments_on_idempotency_key      (idempotency_key) UNIQUE
+#  index_risk_assessments_on_originator_id        (originator_id)
+#  index_risk_assessments_on_status               (status)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (credit_operation_id => credit_operations.id)
+#  fk_rails_...  (originator_id => originators.id)
+#
 class RiskAssessment < ApplicationRecord
   include HasIdempotencyKey
 

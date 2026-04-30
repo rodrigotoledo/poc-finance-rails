@@ -46,6 +46,12 @@ module Api
         assert_equal 1, ids.size
       end
 
+      test "GET index rejects invalid receivable_id type" do
+        get "/api/v1/credit_operations", params: { receivable_id: "abc" }
+        assert_response :bad_request
+        assert_includes response.body, "Invalid parameter"
+      end
+
       test "POST create creates operation when originator matches receivable" do
         o = create_originator!
         r = create_receivable!(originator: o)
@@ -64,6 +70,23 @@ module Api
         end
         assert_response :created
         assert_equal 8_000, JSON.parse(response.body)["funded_amount_cents"]
+      end
+
+      test "POST create rejects invalid receivable_id type" do
+        o = create_originator!
+        post "/api/v1/credit_operations",
+             params: {
+               credit_operation: {
+                 receivable_id: "nope",
+                 originator_id: o.id,
+                 funded_amount_cents: 8_000,
+                 rate: 2.0,
+                 status: "draft"
+               }
+             },
+             as: :json
+        assert_response :bad_request
+        assert_includes response.body, "Invalid parameter"
       end
 
       test "POST create returns unprocessable when originator mismatches receivable" do
@@ -99,7 +122,7 @@ module Api
       end
 
       test "GET show returns 404 for unknown id" do
-        get "/api/v1/credit_operations/999_999_999"
+        get "/api/v1/credit_operations/999999999"
         assert_response :not_found
       end
 

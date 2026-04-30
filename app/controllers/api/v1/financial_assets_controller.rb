@@ -5,6 +5,31 @@ module Api
     class FinancialAssetsController < BaseController
       before_action :set_asset, only: %i[show update destroy]
 
+      FINANCIAL_ASSET_SCHEMA = {
+        originator_id: Parameters.id,
+        credit_operation_id: Parameters.id,
+        receivable_id: Parameters.id,
+        asset_type: Parameters.string,
+        value_cents: Parameters.integer,
+        book_value_cents: Parameters.integer,
+        market_value_cents: Parameters.integer,
+        liquidation_value_cents: Parameters.integer,
+        valuation_date: Parameters.date,
+        status: Parameters.string,
+        valuation_metadata: Parameters.map
+      }
+
+      permitted_parameters :index,
+                           originator_id: Parameters.id,
+                           credit_operation_id: Parameters.id,
+                           receivable_id: Parameters.id,
+                           asset_type: Parameters.string,
+                           status: Parameters.string
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, financial_asset: FINANCIAL_ASSET_SCHEMA
+      permitted_parameters :update, id: Parameters.id, financial_asset: FINANCIAL_ASSET_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       def index
         scope = FinancialAsset.order(:created_at)
         scope = scope.where(originator_id: params[:originator_id]) if params[:originator_id].present?
@@ -55,19 +80,7 @@ module Api
       end
 
       def asset_params
-        params.require(:financial_asset).permit(
-          :originator_id,
-          :credit_operation_id,
-          :receivable_id,
-          :asset_type,
-          :value_cents,
-          :book_value_cents,
-          :market_value_cents,
-          :liquidation_value_cents,
-          :valuation_date,
-          :status,
-          valuation_metadata: {}
-        )
+        params.require(:financial_asset).permit(FINANCIAL_ASSET_SCHEMA)
       end
     end
   end

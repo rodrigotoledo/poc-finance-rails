@@ -1,5 +1,35 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: investment_risks
+#
+#  id                  :bigint           not null, primary key
+#  assessment_date     :date             not null
+#  idempotency_key     :string
+#  impact_cents        :bigint
+#  mitigation_actions  :text
+#  mitigation_status   :string           default("pending"), not null
+#  probability         :decimal(5, 2)
+#  risk_metrics        :jsonb            not null
+#  risk_score          :decimal(5, 2)
+#  risk_type           :string           not null
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  credit_operation_id :bigint
+#  investment_id       :bigint
+#
+# Indexes
+#
+#  index_investment_risks_on_credit_operation_id  (credit_operation_id)
+#  index_investment_risks_on_idempotency_key      (idempotency_key) UNIQUE
+#  index_investment_risks_on_investment_id        (investment_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (credit_operation_id => credit_operations.id)
+#  fk_rails_...  (investment_id => investments.id)
+#
 class InvestmentRisk < ApplicationRecord
   include HasIdempotencyKey
   include Publishable

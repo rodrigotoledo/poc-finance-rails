@@ -5,6 +5,17 @@ module Api
     class OriginatorsController < BaseController
       before_action :set_originator, only: %i[show update destroy]
 
+      ORIGINATOR_SCHEMA = {
+        legal_name: Parameters.string,
+        tax_id: Parameters.string
+      }
+
+      permitted_parameters :index, {}
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, originator: ORIGINATOR_SCHEMA
+      permitted_parameters :update, id: Parameters.id, originator: ORIGINATOR_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       def index
         scope = Originator.kept.order(:created_at)
         if params[:q].present?
@@ -65,7 +76,7 @@ module Api
       end
 
       def originator_params
-        params.require(:originator).permit(:legal_name, :tax_id)
+        params.require(:originator).permit(ORIGINATOR_SCHEMA)
       end
     end
   end

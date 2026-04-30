@@ -5,6 +5,18 @@ module Api
     class InvestorsController < BaseController
       before_action :set_investor, only: %i[show update destroy]
 
+      INVESTOR_SCHEMA = {
+        legal_name: Parameters.string,
+        tax_id: Parameters.string,
+        investor_type: Parameters.string
+      }
+
+      permitted_parameters :index, {}
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, investor: INVESTOR_SCHEMA
+      permitted_parameters :update, id: Parameters.id, investor: INVESTOR_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       def index
         scope = Investor.kept.order(:created_at)
         if params[:q].present?
@@ -60,7 +72,7 @@ module Api
       end
 
       def investor_params
-        params.require(:investor).permit(:legal_name, :tax_id, :investor_type)
+        params.require(:investor).permit(INVESTOR_SCHEMA)
       end
     end
   end

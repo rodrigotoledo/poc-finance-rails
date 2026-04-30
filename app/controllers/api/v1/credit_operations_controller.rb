@@ -5,6 +5,30 @@ module Api
     class CreditOperationsController < BaseController
       before_action :set_credit_operation, only: %i[show update destroy]
 
+      CREDIT_OPERATION_SCHEMA = {
+        receivable_id: Parameters.id,
+        originator_id: Parameters.id,
+        funded_amount_cents: Parameters.integer,
+        rate: Parameters.float,
+        status: Parameters.string,
+        total_invested_cents: Parameters.integer,
+        available_for_investment_cents: Parameters.integer,
+        investment_start_date: Parameters.date,
+        investment_end_date: Parameters.date,
+        risk_rating: Parameters.string,
+        expected_return_rate: Parameters.float
+      }
+
+      permitted_parameters :index,
+                           originator_id: Parameters.id,
+                           receivable_id: Parameters.id,
+                           status: Parameters.string,
+                           q: Parameters.string
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, credit_operation: CREDIT_OPERATION_SCHEMA
+      permitted_parameters :update, id: Parameters.id, credit_operation: CREDIT_OPERATION_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       def index
         scope = CreditOperation.kept
                  .joins(:receivable, :originator)
@@ -79,19 +103,7 @@ module Api
       end
 
       def credit_operation_params
-        params.require(:credit_operation).permit(
-          :receivable_id,
-          :originator_id,
-          :funded_amount_cents,
-          :rate,
-          :status,
-          :total_invested_cents,
-          :available_for_investment_cents,
-          :investment_start_date,
-          :investment_end_date,
-          :risk_rating,
-          :expected_return_rate
-        )
+        params.require(:credit_operation).permit(CREDIT_OPERATION_SCHEMA)
       end
     end
   end

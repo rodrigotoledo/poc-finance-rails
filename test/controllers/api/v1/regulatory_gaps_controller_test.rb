@@ -71,7 +71,7 @@ module Api
       end
 
       test "GET show returns 404 for unknown id" do
-        get "/api/v1/regulatory_gaps/999_999_999"
+        get "/api/v1/regulatory_gaps/999999999"
         assert_response :not_found
       end
 

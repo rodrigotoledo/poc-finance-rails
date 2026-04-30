@@ -83,4 +83,8 @@ group :development do
   # Auto-run Minitest on file save (see compose.yml service `guard`)
   gem "guard", "~> 2.19"
   gem "guard-minitest", "~> 2.4"
+
+  gem 'annot8', '~> 1.0', '>= 1.0.1'
 end
+
+gem "stronger_parameters"

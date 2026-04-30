@@ -5,6 +5,24 @@ module Api
     class InvestmentAccountsController < BaseController
       before_action :set_account, only: %i[show update destroy]
 
+      INVESTMENT_ACCOUNT_SCHEMA = {
+        investor_id: Parameters.id,
+        originator_id: Parameters.id,
+        account_number: Parameters.string,
+        available_balance_cents: Parameters.integer,
+        invested_balance_cents: Parameters.integer,
+        status: Parameters.string
+      }
+
+      permitted_parameters :index,
+                           investor_id: Parameters.id,
+                           originator_id: Parameters.id,
+                           status: Parameters.string
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, investment_account: INVESTMENT_ACCOUNT_SCHEMA
+      permitted_parameters :update, id: Parameters.id, investment_account: INVESTMENT_ACCOUNT_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       def index
         scope = InvestmentAccount.order(:created_at)
         scope = scope.where(investor_id: params[:investor_id]) if params[:investor_id].present?
@@ -56,14 +74,7 @@ module Api
       end
 
       def account_params
-        params.require(:investment_account).permit(
-          :investor_id,
-          :originator_id,
-          :account_number,
-          :available_balance_cents,
-          :invested_balance_cents,
-          :status
-        )
+        params.require(:investment_account).permit(INVESTMENT_ACCOUNT_SCHEMA)
       end
     end
   end
