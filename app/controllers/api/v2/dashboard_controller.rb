@@ -44,8 +44,29 @@ module Api
         }
       end
 
-      # GET /api/v2/events — Server-Sent Events stream from Redis pub/sub
+      # GET /api/v2/events — SSE stream or JSON polling (via Redis Stream)
       def events
+        if request.headers["Accept"] == "text/event-stream"
+          stream_events
+        else
+          # Polling: return last 50 events from Redis stream
+          entries = RedisPublisher.redis.xrevrange(RedisPublisher::STREAM, "+", "-", count: 50)
+          events = entries.map do |_id, data|
+            {
+              entity: data["entity"],
+              action: data["action"],
+              id:     data["id"],
+              time:   data["time"],
+              meta:   JSON.parse(data["meta"] || "{}")
+            }
+          end
+          render json: events
+        end
+      end
+
+      private
+
+      def stream_events
         response.headers["Content-Type"]      = "text/event-stream"
         response.headers["Cache-Control"]     = "no-cache"
         response.headers["X-Accel-Buffering"] = "no"
