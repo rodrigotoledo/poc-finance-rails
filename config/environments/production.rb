@@ -44,7 +44,7 @@ Rails.application.configure do
   config.active_support.report_deprecations = false
 
   # Use Redis for Rails cache.
-  config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0") }
+  config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL", "redis://redis:6379/0") }
 
   # ActiveJob em background via Sidekiq (scheduler roda no processo do Sidekiq).
   config.active_job.queue_adapter = :sidekiq

@@ -338,7 +338,10 @@ docker compose run --rm -e VISUAL="code --wait" app bin/rails credentials:edit
 
 Após alterar o `Gemfile`: `docker compose run --rm app bundle install`.
 
-Não usamos **annotate** / anotação automática de schema nos models: o gem clássico não resolve com ActiveRecord 8.x; manteremos só o que o `db/schema.rb` e o código já documentam.
+Usamos anotação automática via **annot8** (fork compatível com Rails 8 / ActiveRecord 8) para manter schema e rotas visíveis onde importa.
+
+- Models: `docker compose run --rm app bundle exec rake annotate_models`
+- Routes: `docker compose run --rm app bundle exec rake annotate_routes`
 
 ## Estrutura de domínio (Rails)
 

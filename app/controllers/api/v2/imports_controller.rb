@@ -5,6 +5,12 @@ module Api
     class ImportsController < BaseController
       ALLOWED_EXTENSIONS = %w[.csv .xlsx].freeze
 
+      permitted_parameters :index, {}
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create,
+                           file: Parameters.file.required,
+                           originator_id: Parameters.id
+
       def index
         batches = ImportBatch.order(created_at: :desc).limit(100)
         render json: batches.map { |b| serialize(b) }

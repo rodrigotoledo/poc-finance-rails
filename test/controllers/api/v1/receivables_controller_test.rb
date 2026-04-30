@@ -41,6 +41,12 @@ module Api
         assert_equal 1, ids.size
       end
 
+      test "GET index rejects invalid originator_id type" do
+        get "/api/v1/receivables", params: { originator_id: "abc" }
+        assert_response :bad_request
+        assert_includes response.body, "Invalid parameter"
+      end
+
       test "POST create creates receivable" do
         o = create_originator!
         assert_difference("Receivable.count", 1) do
@@ -61,6 +67,22 @@ module Api
         assert_equal 25_000, body["amount_cents"]
       end
 
+      test "POST create rejects invalid originator_id type" do
+        post "/api/v1/receivables",
+             params: {
+               receivable: {
+                 originator_id: "nope",
+                 reference_number: "NEW-#{SecureRandom.hex(4)}",
+                 amount_cents: 25_000,
+                 due_on: Date.current + 10,
+                 status: "pending"
+               }
+             },
+             as: :json
+        assert_response :bad_request
+        assert_includes response.body, "Invalid parameter"
+      end
+
       test "GET show returns receivable with originator" do
         o = create_originator!
         r = create_receivable!(originator: o)
@@ -72,7 +94,7 @@ module Api
       end
 
       test "GET show returns 404 for unknown id" do
-        get "/api/v1/receivables/999_999_999"
+        get "/api/v1/receivables/999999999"
         assert_response :not_found
       end
 

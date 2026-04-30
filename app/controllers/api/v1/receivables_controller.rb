@@ -5,6 +5,26 @@ module Api
     class ReceivablesController < BaseController
       before_action :set_receivable, only: %i[show update destroy]
 
+      RECEIVABLE_SCHEMA = {
+        originator_id: Parameters.id,
+        reference_number: Parameters.string,
+        amount_cents: Parameters.integer,
+        due_on: Parameters.date,
+        status: Parameters.string,
+        collateral_value_cents: Parameters.integer,
+        discount_rate: Parameters.float,
+        risk_weight: Parameters.float
+      }
+
+      permitted_parameters :index,
+                           originator_id: Parameters.id,
+                           status: Parameters.string,
+                           q: Parameters.string
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, receivable: RECEIVABLE_SCHEMA
+      permitted_parameters :update, id: Parameters.id, receivable: RECEIVABLE_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       def index
         scope = Receivable.kept.joins(:originator).merge(Originator.kept).includes(:originator).order(:created_at)
         scope = scope.where(originator_id: params[:originator_id]) if params[:originator_id].present?
@@ -69,16 +89,7 @@ module Api
       end
 
       def receivable_params
-        params.require(:receivable).permit(
-          :originator_id,
-          :reference_number,
-          :amount_cents,
-          :due_on,
-          :status,
-          :collateral_value_cents,
-          :discount_rate,
-          :risk_weight
-        )
+        params.require(:receivable).permit(RECEIVABLE_SCHEMA)
       end
     end
   end

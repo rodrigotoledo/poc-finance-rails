@@ -1,5 +1,41 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: investments
+#
+#  id                    :bigint           not null, primary key
+#  amount_cents          :bigint           not null
+#  discarded_at          :datetime
+#  idempotency_key       :string
+#  interest_rate         :decimal(7, 4)
+#  investment_date       :date             not null
+#  maturity_date         :date
+#  status                :string           default("active"), not null
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  credit_operation_id   :bigint           not null
+#  fund_id               :bigint
+#  investment_account_id :bigint           not null
+#  investor_id           :bigint           not null
+#
+# Indexes
+#
+#  index_investments_on_credit_operation_id    (credit_operation_id)
+#  index_investments_on_discarded_at           (discarded_at)
+#  index_investments_on_fund_id                (fund_id)
+#  index_investments_on_idempotency_key        (idempotency_key) UNIQUE WHERE (discarded_at IS NULL)
+#  index_investments_on_investment_account_id  (investment_account_id)
+#  index_investments_on_investor_id            (investor_id)
+#  index_investments_on_status                 (status)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (credit_operation_id => credit_operations.id)
+#  fk_rails_...  (fund_id => funds.id)
+#  fk_rails_...  (investment_account_id => investment_accounts.id)
+#  fk_rails_...  (investor_id => investors.id)
+#
 class Investment < ApplicationRecord
   include Discard::Model
   include HasIdempotencyKey

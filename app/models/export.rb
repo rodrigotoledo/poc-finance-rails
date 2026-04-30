@@ -1,5 +1,32 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: exports
+#
+#  id                 :bigint           not null, primary key
+#  completed_at       :datetime
+#  deliver_to_email   :string
+#  entity             :string           not null
+#  error_message      :text
+#  file_path          :string
+#  filename           :string
+#  idempotency_key    :string
+#  range              :string           not null
+#  requested_by_email :string
+#  row_count          :integer
+#  started_at         :datetime
+#  status             :string           default("pending"), not null
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#
+# Indexes
+#
+#  index_exports_on_created_at       (created_at)
+#  index_exports_on_entity           (entity)
+#  index_exports_on_idempotency_key  (idempotency_key) UNIQUE
+#  index_exports_on_status           (status)
+#
 class Export < ApplicationRecord
   include HasIdempotencyKey
   include Publishable

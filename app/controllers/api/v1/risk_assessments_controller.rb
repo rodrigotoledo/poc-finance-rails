@@ -5,6 +5,28 @@ module Api
     class RiskAssessmentsController < BaseController
       before_action :set_assessment, only: %i[show update destroy]
 
+      RISK_ASSESSMENT_SCHEMA = {
+        credit_operation_id: Parameters.id,
+        originator_id: Parameters.id,
+        assessment_type: Parameters.string,
+        score: Parameters.float,
+        rating: Parameters.string,
+        assessment_date: Parameters.date,
+        expiry_date: Parameters.date,
+        status: Parameters.string,
+        assessment_details: Parameters.map
+      }
+
+      permitted_parameters :index,
+                           credit_operation_id: Parameters.id,
+                           originator_id: Parameters.id,
+                           assessment_type: Parameters.string,
+                           status: Parameters.string
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, risk_assessment: RISK_ASSESSMENT_SCHEMA
+      permitted_parameters :update, id: Parameters.id, risk_assessment: RISK_ASSESSMENT_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       def index
         scope = RiskAssessment.order(assessment_date: :desc)
         scope = scope.where(credit_operation_id: params[:credit_operation_id]) if params[:credit_operation_id].present?
@@ -54,17 +76,7 @@ module Api
       end
 
       def assessment_params
-        params.require(:risk_assessment).permit(
-          :credit_operation_id,
-          :originator_id,
-          :assessment_type,
-          :score,
-          :rating,
-          :assessment_date,
-          :expiry_date,
-          :status,
-          assessment_details: {}
-        )
+        params.require(:risk_assessment).permit(RISK_ASSESSMENT_SCHEMA)
       end
     end
   end

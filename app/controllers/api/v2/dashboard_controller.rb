@@ -5,6 +5,9 @@ module Api
     class DashboardController < BaseController
       include ActionController::Live
 
+      permitted_parameters :stats, {}
+      permitted_parameters :events, {}
+
       # GET /api/v2/dashboard
       def stats
         receivables = Receivable.kept
@@ -72,7 +75,7 @@ module Api
         response.headers["X-Accel-Buffering"] = "no"
         response.headers["Access-Control-Allow-Origin"] = "*"
 
-        redis = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
+        redis = Redis.new(url: ENV.fetch("REDIS_URL", "redis://redis:6379/0"))
 
         # Send a heartbeat immediately so the client knows the connection is alive
         response.stream.write(": heartbeat\n\n")

@@ -1,5 +1,33 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: import_batches
+#
+#  id              :bigint           not null, primary key
+#  failed_rows     :integer          default(0), not null
+#  file_path       :string           not null
+#  file_type       :string           not null
+#  filename        :string           not null
+#  idempotency_key :string
+#  processed_rows  :integer          default(0), not null
+#  row_errors      :jsonb            not null
+#  status          :string           default("pending"), not null
+#  total_rows      :integer          default(0), not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  originator_id   :bigint
+#
+# Indexes
+#
+#  index_import_batches_on_idempotency_key  (idempotency_key) UNIQUE
+#  index_import_batches_on_originator_id    (originator_id)
+#  index_import_batches_on_status           (status)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (originator_id => originators.id)
+#
 require "test_helper"
 
 class ImportBatchTest < ActiveSupport::TestCase

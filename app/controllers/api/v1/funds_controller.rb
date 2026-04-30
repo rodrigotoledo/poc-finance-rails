@@ -5,6 +5,25 @@ module Api
     class FundsController < BaseController
       before_action :set_fund, only: %i[show update destroy]
 
+      FUND_SCHEMA = {
+        name: Parameters.string,
+        fund_type: Parameters.string,
+        total_commitment_cents: Parameters.integer,
+        allocated_amount_cents: Parameters.integer,
+        available_amount_cents: Parameters.integer,
+        inception_date: Parameters.date,
+        maturity_date: Parameters.date,
+        target_return_rate: Parameters.float,
+        status: Parameters.string
+      }
+
+      permitted_parameters :dashboard, {}
+      permitted_parameters :index, {}
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, fund: FUND_SCHEMA
+      permitted_parameters :update, id: Parameters.id, fund: FUND_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       # GET /api/v1/funds/dashboard — agregados financeiros e riscos ligados a investimentos com fundo.
       def dashboard
         funds_scope = Fund.all
@@ -85,17 +104,7 @@ module Api
       end
 
       def fund_params
-        params.require(:fund).permit(
-          :name,
-          :fund_type,
-          :total_commitment_cents,
-          :allocated_amount_cents,
-          :available_amount_cents,
-          :inception_date,
-          :maturity_date,
-          :target_return_rate,
-          :status
-        )
+        params.require(:fund).permit(FUND_SCHEMA)
       end
     end
   end

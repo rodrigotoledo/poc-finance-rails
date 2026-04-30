@@ -3,6 +3,12 @@ module Api
     class ImportsController < BaseController
       ALLOWED_EXTENSIONS = %w[.csv .xlsx].freeze
 
+      permitted_parameters :index, {}
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create,
+                           file: Parameters.file,
+                           originator_id: Parameters.id
+
       # GET /api/v1/imports
       def index
         scope = ImportBatch.order(created_at: :desc)

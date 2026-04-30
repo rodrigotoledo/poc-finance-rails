@@ -5,6 +5,28 @@ module Api
     class InvestmentRisksController < BaseController
       before_action :set_risk, only: %i[show update destroy]
 
+      INVESTMENT_RISK_SCHEMA = {
+        investment_id: Parameters.id,
+        credit_operation_id: Parameters.id,
+        risk_type: Parameters.string,
+        probability: Parameters.float,
+        impact_cents: Parameters.integer,
+        risk_score: Parameters.float,
+        assessment_date: Parameters.date,
+        mitigation_status: Parameters.string,
+        mitigation_actions: Parameters.string,
+        risk_metrics: Parameters.map
+      }
+
+      permitted_parameters :index,
+                           investment_id: Parameters.id,
+                           credit_operation_id: Parameters.id,
+                           risk_type: Parameters.string
+      permitted_parameters :show, id: Parameters.id
+      permitted_parameters :create, investment_risk: INVESTMENT_RISK_SCHEMA
+      permitted_parameters :update, id: Parameters.id, investment_risk: INVESTMENT_RISK_SCHEMA
+      permitted_parameters :destroy, id: Parameters.id
+
       def index
         scope = InvestmentRisk.order(:assessment_date)
         scope = scope.where(investment_id: params[:investment_id]) if params[:investment_id].present?
@@ -53,18 +75,7 @@ module Api
       end
 
       def risk_params
-        params.require(:investment_risk).permit(
-          :investment_id,
-          :credit_operation_id,
-          :risk_type,
-          :probability,
-          :impact_cents,
-          :risk_score,
-          :assessment_date,
-          :mitigation_status,
-          :mitigation_actions,
-          risk_metrics: {}
-        )
+        params.require(:investment_risk).permit(INVESTMENT_RISK_SCHEMA)
       end
     end
   end

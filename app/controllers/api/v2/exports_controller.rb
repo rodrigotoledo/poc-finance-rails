@@ -3,6 +3,12 @@
 module Api
   module V2
     class ExportsController < BaseController
+      permitted_parameters :create,
+                           entity: Parameters.string.required,
+                           range: Parameters.string.required,
+                           deliver_to_email: Parameters.string
+      permitted_parameters :show, id: Parameters.id
+
       def create
         export = Export.create!(
           entity: params.require(:entity),
