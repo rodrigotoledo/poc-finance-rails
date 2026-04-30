@@ -29,7 +29,7 @@ gem "bootsnap", require: false
 gem "rack-cors"
 
 # API JSON: ?page=&per_page= nas listagens (integração com TanStack Table manualPagination)
-gem "pagy", "~> 9.0"
+gem "pagy", "~> 43.5"
 
 # Soft delete (sets discarded_at; rows stay in the database)
 gem "discard", "~> 1.3"
